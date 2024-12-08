@@ -1,75 +1,134 @@
--- Foxes Library
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 local FoxesLib = {}
-local player = game.Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
 
--- Функция для создания закруглённых краёв
+-- Утилита для закругленных углов
 local function addUICorner(instance, radius)
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, radius or 10) -- Закругление по умолчанию 10
+    corner.CornerRadius = UDim.new(0, radius or 10)
     corner.Parent = instance
 end
 
--- Создание основного окна
+-- GUI основное окно
 function FoxesLib:CreateMain(title, logoId)
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "FoxesLibrary"
-    screenGui.Parent = playerGui
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = CoreGui
 
-    -- Главный фрейм
     local mainFrame = Instance.new("Frame")
-    mainFrame.Name = "MainFrame"
-    mainFrame.Size = UDim2.new(0.4, 0, 0.5, 0)
-    mainFrame.Position = UDim2.new(0.3, 0, 0.25, 0)
+    mainFrame.Size = UDim2.new(0.4, 0, 0.6, 0)
+    mainFrame.Position = UDim2.new(0.3, 0, 0.2, 0)
     mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     mainFrame.BorderSizePixel = 0
+    mainFrame.Visible = false
     mainFrame.Parent = screenGui
     addUICorner(mainFrame)
 
-    -- Лого
-    local logo = Instance.new("ImageLabel")
-    logo.Name = "Logo"
-    logo.Size = UDim2.new(0.2, 0, 0.2, 0)
-    logo.Position = UDim2.new(0.4, 0, 0.05, 0)
-    logo.Image = logoId or "rbxassetid://0" -- ID изображения
-    logo.BackgroundTransparency = 1
-    logo.Parent = mainFrame
+    -- Анимация появления
+    local function showGUI()
+        mainFrame.Visible = true
+        mainFrame.BackgroundTransparency = 1
+        local tween = TweenService:Create(
+            mainFrame,
+            TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {BackgroundTransparency = 0}
+        )
+        tween:Play()
+    end
 
-    -- Название
+    -- Анимация закрытия
+    local function closeGUI()
+        local tween = TweenService:Create(
+            mainFrame,
+            TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {BackgroundTransparency = 1}
+        )
+        tween:Play()
+        tween.Completed:Connect(function()
+            mainFrame.Visible = false
+        end)
+    end
+
+    -- Добавляем верхний бар с лого и кнопкой закрытия
+    local topBar = Instance.new("Frame")
+    topBar.Size = UDim2.new(1, 0, 0.1, 0)
+    topBar.BackgroundColor3 = Color3.fromRGB(255, 165, 0) 
+    topBar.BorderSizePixel = 0
+    topBar.Parent = mainFrame
+    addUICorner(topBar)
+
+    local logo = Instance.new("ImageLabel")
+    logo.Size = UDim2.new(0.15, 0, 0.8, 0)
+    logo.Position = UDim2.new(0.02, 0, 0.1, 0)
+    logo.Image = logoId or "rbxassetid://0"
+    logo.BackgroundTransparency = 1
+    logo.Parent = topBar
+
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Name = "Title"
-    titleLabel.Size = UDim2.new(1, 0, 0.1, 0)
-    titleLabel.Position = UDim2.new(0, 0, 0.3, 0)
+    titleLabel.Size = UDim2.new(0.7, 0, 0.8, 0)
+    titleLabel.Position = UDim2.new(0.2, 0, 0.1, 0)
     titleLabel.Text = title or "Foxes Library"
-    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     titleLabel.TextScaled = true
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Parent = mainFrame
+    titleLabel.Parent = topBar
 
-    -- Контейнер для элементов
-    local contentFrame = Instance.new("Frame")
-    contentFrame.Name = "ContentFrame"
-    contentFrame.Size = UDim2.new(1, 0, 0.6, 0)
-    contentFrame.Position = UDim2.new(0, 0, 0.4, 0)
-    contentFrame.BackgroundTransparency = 1
-    contentFrame.Parent = mainFrame
+    local closeButton = Instance.new("TextButton")
+    closeButton.Size = UDim2.new(0.1, 0, 0.8, 0)
+    closeButton.Position = UDim2.new(0.9, 0, 0.1, 0)
+    closeButton.Text = "X"
+    closeButton.TextScaled = true
+    closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    closeButton.Parent = topBar
+    addUICorner(closeButton)
 
-    self.ContentFrame = contentFrame
-    return self
+    closeButton.MouseButton1Click:Connect(closeGUI)
+
+    local dragging
+    local dragStart
+    local startPos
+
+    topBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    topBar.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    return {
+        Show = showGUI,
+        Close = closeGUI
+    }
 end
 
--- Функция добавления кнопки
-function FoxesLib:AddButton(buttonText, callback)
+function FoxesLib:AddButton(parent, text, callback)
     local button = Instance.new("TextButton")
-    button.Name = buttonText
     button.Size = UDim2.new(0.8, 0, 0.1, 0)
-    button.Position = UDim2.new(0.1, 0, #self.ContentFrame:GetChildren() * 0.12, 0)
-    button.Text = buttonText
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Position = UDim2.new(0.1, 0, 0, 0)
+    button.Text = text
     button.TextScaled = true
     button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    button.BorderSizePixel = 0
-    button.Parent = self.ContentFrame
+    button.Parent = parent
     addUICorner(button)
 
     button.MouseButton1Click:Connect(function()
@@ -79,119 +138,29 @@ function FoxesLib:AddButton(buttonText, callback)
     end)
 end
 
--- Функция добавления слайдера
-function FoxesLib:AddSlider(sliderText, minValue, maxValue, callback)
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(0.8, 0, 0.1, 0)
-    sliderFrame.Position = UDim2.new(0.1, 0, #self.ContentFrame:GetChildren() * 0.12, 0)
-    sliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    sliderFrame.BorderSizePixel = 0
-    sliderFrame.Parent = self.ContentFrame
-    addUICorner(sliderFrame)
+function FoxesLib:AddSlider(parent, minVal, maxVal, defaultVal, callback)
+    local slider = Instance.new("Frame")
+    slider.Size = UDim2.new(0.8, 0, 0.1, 0)
+    slider.Position = UDim2.new(0.1, 0, 0, 0)
+    slider.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    slider.Parent = parent
+    addUICorner(slider)
 
-    local sliderLabel = Instance.new("TextLabel")
-    sliderLabel.Text = sliderText
-    sliderLabel.Size = UDim2.new(1, 0, 0.5, 0)
-    sliderLabel.BackgroundTransparency = 1
-    sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    sliderLabel.TextScaled = true
-    sliderLabel.Parent = sliderFrame
+    local handle = Instance.new("Frame")
+    handle.Size = UDim2.new(0.1, 0, 1, 0)
+    handle.Position = UDim2.new(0, 0, 0, 0)
+    handle.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
+    handle.Parent = slider
+    addUICorner(handle)
 
-    local sliderBar = Instance.new("Frame")
-    sliderBar.Size = UDim2.new(1, 0, 0.5, 0)
-    sliderBar.Position = UDim2.new(0, 0, 0.5, 0)
-    sliderBar.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    sliderBar.BorderSizePixel = 0
-    sliderBar.Parent = sliderFrame
-    addUICorner(sliderBar)
-
-    local sliderButton = Instance.new("Frame")
-    sliderButton.Size = UDim2.new(0.1, 0, 1, 0)
-    sliderButton.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
-    sliderButton.BorderSizePixel = 0
-    sliderButton.Parent = sliderBar
-    addUICorner(sliderButton)
-
-    sliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local moveConnection
-            moveConnection = game:GetService("UserInputService").InputChanged:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseMovement then
-                    local mousePos = game:GetService("UserInputService"):GetMouseLocation()
-                    local relativeX = math.clamp((mousePos.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
-                    sliderButton.Size = UDim2.new(relativeX, 0, 1, 0)
-                    local value = math.floor(relativeX * (maxValue - minValue) + minValue)
-                    if callback then
-                        callback(value)
-                    end
-                end
-            end)
-
-            game:GetService("UserInputService").InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    moveConnection:Disconnect()
-                end
-            end)
-        end
-    end)
-end
-
--- Функция добавления текстового поля
-function FoxesLib:AddTextbox(placeholderText, callback)
-    local textBox = Instance.new("TextBox")
-    textBox.Size = UDim2.new(0.8, 0, 0.1, 0)
-    textBox.Position = UDim2.new(0.1, 0, #self.ContentFrame:GetChildren() * 0.12, 0)
-    textBox.Text = ""
-    textBox.PlaceholderText = placeholderText or "Введите текст"
-    textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-    textBox.TextScaled = true
-    textBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    textBox.BorderSizePixel = 0
-    textBox.Parent = self.ContentFrame
-    addUICorner(textBox)
-
-    textBox.FocusLost:Connect(function(enterPressed)
-        if enterPressed and callback then
-            callback(textBox.Text)
-        end
-    end)
-end
-
--- Функция добавления переключателя (тоггла)
-function FoxesLib:AddToggle(toggleText, defaultState, callback)
-    local toggleFrame = Instance.new("Frame")
-    toggleFrame.Size = UDim2.new(0.8, 0, 0.1, 0)
-    toggleFrame.Position = UDim2.new(0.1, 0, #self.ContentFrame:GetChildren() * 0.12, 0)
-    toggleFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    toggleFrame.BorderSizePixel = 0
-    toggleFrame.Parent = self.ContentFrame
-    addUICorner(toggleFrame)
-
-    local toggleLabel = Instance.new("TextLabel")
-    toggleLabel.Text = toggleText
-    toggleLabel.Size = UDim2.new(0.8, 0, 1, 0)
-    toggleLabel.BackgroundTransparency = 1
-    toggleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleLabel.TextScaled = true
-    toggleLabel.Parent = toggleFrame
-
-    local toggleButton = Instance.new("TextButton")
-    toggleButton.Text = defaultState and "ON" or "OFF"
-    toggleButton.Size = UDim2.new(0.2, 0, 0.8, 0)
-    toggleButton.Position = UDim2.new(0.8, 0, 0.1, 0)
-    toggleButton.BackgroundColor3 = defaultState and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-    toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleButton.TextScaled = true
-    toggleButton.Parent = toggleFrame
-    addUICorner(toggleButton)
-
-    toggleButton.MouseButton1Click:Connect(function()
-        defaultState = not defaultState
-        toggleButton.Text = defaultState and "ON" or "OFF"
-        toggleButton.BackgroundColor3 = defaultState and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        if callback then
-            callback(defaultState)
-        end
+    handle.MouseButton1Down:Connect(function()
+        handle.MouseMoved:Connect(function(mouseX)
+            local newPosition = math.clamp(mouseX / slider.AbsoluteSize.X, 0, 1)
+            handle.Position = UDim2.new(newPosition, 0, 0, 0)
+            if callback then
+                callback(math.floor(minVal + newPosition * (maxVal - minVal)))
+            end
+        end)
     end)
 end
 
