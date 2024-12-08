@@ -1,1 +1,165 @@
+-- Foxys Library GUI Example
+local library = {}
+local userinterface = Instance.new("ScreenGui")
+userinterface.Name = "FoxysLibraryGUI"
+userinterface.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 500, 0, 300)
+mainFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
+mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.Parent = userinterface
+
+-- Title Label
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -50, 0, 30)
+titleLabel.Position = UDim2.new(0, 50, 0, 0)
+titleLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+titleLabel.Text = "Foxys Library GUI"
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 20
+titleLabel.Parent = mainFrame
+
+-- Logo Image
+local logoImage = Instance.new("ImageLabel")
+logoImage.Size = UDim2.new(0, 30, 0, 30)
+logoImage.Position = UDim2.new(0, 10, 0, 0)
+logoImage.BackgroundTransparency = 1
+logoImage.Image = "rbxassetid://1234567890" -- Replace with your logo asset ID
+logoImage.Parent = mainFrame
+
+-- Left Tab Bar
+local tabBar = Instance.new("Frame")
+tabBar.Size = UDim2.new(0, 100, 1, 0)
+tabBar.BackgroundColor3 = Color3.fromRGB(255, 127, 39)
+tabBar.Parent = mainFrame
+
+local tabs = {} -- Table to store tabs
+local tabContent = {} -- Store content for each tab
+local selectedTab = nil -- Track selected tab
+
+-- Tab creation function
+function library:CreateTab(tabName)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, 0, 0, 40)
+    button.Text = tabName
+    button.Font = Enum.Font.SourceSans
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.BackgroundColor3 = Color3.fromRGB(255, 102, 0)
+    button.Parent = tabBar
+
+    local content = Instance.new("Frame")
+    content.Size = UDim2.new(1, -100, 1, 0)
+    content.Position = UDim2.new(0, 100, 0, 0)
+    content.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    content.Visible = false
+    content.Parent = mainFrame
+
+    button.MouseButton1Click:Connect(function()
+        if selectedTab then
+            tabContent[selectedTab].Visible = false
+        end
+        selectedTab = tabName
+        content.Visible = true
+    end)
+
+    tabs[tabName] = button
+    tabContent[tabName] = content
+end
+
+-- Add UI Elements to Tabs
+function library:AddButton(tabName, buttonText, callback)
+    local content = tabContent[tabName]
+    if not content then return end
+
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 200, 0, 40)
+    button.Position = UDim2.new(0, 10, 0, #content:GetChildren() * 50)
+    button.Text = buttonText
+    button.Font = Enum.Font.SourceSans
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    button.Parent = content
+
+    button.MouseButton1Click:Connect(function()
+        callback()
+    end)
+end
+
+function library:AddLabel(tabName, text)
+    local content = tabContent[tabName]
+    if not content then return end
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 200, 0, 40)
+    label.Position = UDim2.new(0, 10, 0, #content:GetChildren() * 50)
+    label.Text = text
+    label.Font = Enum.Font.SourceSans
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    label.Parent = content
+end
+
+function library:AddSlider(tabName, sliderName, min, max, callback)
+    local content = tabContent[tabName]
+    if not content then return end
+
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Size = UDim2.new(0, 200, 0, 50)
+    sliderFrame.Position = UDim2.new(0, 10, 0, #content:GetChildren() * 50)
+    sliderFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    sliderFrame.Parent = content
+
+    local sliderLabel = Instance.new("TextLabel")
+    sliderLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    sliderLabel.Text = sliderName
+    sliderLabel.Font = Enum.Font.SourceSans
+    sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sliderLabel.BackgroundTransparency = 1
+    sliderLabel.Parent = sliderFrame
+
+    local sliderBar = Instance.new("Frame")
+    sliderBar.Size = UDim2.new(1, 0, 0.5, 0)
+    sliderBar.Position = UDim2.new(0, 0, 0.5, 0)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    sliderBar.Parent = sliderFrame
+
+    local sliderHandle = Instance.new("Frame")
+    sliderHandle.Size = UDim2.new(0, 10, 1, 0)
+    sliderHandle.BackgroundColor3 = Color3.fromRGB(255, 127, 39)
+    sliderHandle.Parent = sliderBar
+
+    local dragging = false
+
+    sliderHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+        end
+    end)
+
+    sliderHandle.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local scale = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
+            sliderHandle.Position = UDim2.new(scale, 0, 0, 0)
+            local value = math.floor(min + (max - min) * scale)
+            callback(value)
+        end
+    end)
+end
+
+-- Example Usage
+library:CreateTab("Home")
+library:AddButton("Home", "Click Me", function()
+    print("Button clicked!")
+end)
+library:AddLabel("Home", "Welcome to Foxys Library!")
 
