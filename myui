@@ -223,7 +223,7 @@ end
 TextButton1.TextColor3 = theme3
 end
 Frame.Visible = true
-play("rbxassetid://1412830636")
+play("rbxassetid://94055244352855")
 end)
 
 local InsideTab = {}
