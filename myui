@@ -157,7 +157,7 @@ end
 function HenyLib:AddButton(tabFrame, buttonText, callback)
     local Button = Instance.new("TextButton", tabFrame)
     Button.Size = UDim2.new(1, -20, 0, 30)
-    Button.Position = UDim2.new(0, 10, 0, #tabFrame:GetChildren() * 40)
+    Button.Position = UDim2.new(0, 10, 0, (#tabFrame:GetChildren() - 1) * 40)
     Button.Text = buttonText
     Button.TextColor3 = Color3.fromRGB(255, 255, 255)
     Button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
@@ -166,6 +166,80 @@ function HenyLib:AddButton(tabFrame, buttonText, callback)
     ButtonUICorner.CornerRadius = UDim.new(0, 6)
 
     Button.MouseButton1Click:Connect(callback)
+end
+
+-- Add a label
+function HenyLib:AddLabel(tabFrame, labelText)
+    local Label = Instance.new("TextLabel", tabFrame)
+    Label.Size = UDim2.new(1, -20, 0, 30)
+    Label.Position = UDim2.new(0, 10, 0, (#tabFrame:GetChildren() - 1) * 40)
+    Label.Text = labelText
+    Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Label.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    Label.Font = Enum.Font.SourceSans
+    Label.TextSize = 16
+
+    local LabelUICorner = Instance.new("UICorner", Label)
+    LabelUICorner.CornerRadius = UDim.new(0, 6)
+end
+
+-- Add a text box
+function HenyLib:AddTextBox(tabFrame, placeholderText, callback)
+    local TextBox = Instance.new("TextBox", tabFrame)
+    TextBox.Size = UDim2.new(1, -20, 0, 30)
+    TextBox.Position = UDim2.new(0, 10, 0, (#tabFrame:GetChildren() - 1) * 40)
+    TextBox.PlaceholderText = placeholderText
+    TextBox.Text = ""
+    TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TextBox.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    TextBox.Font = Enum.Font.SourceSans
+    TextBox.TextSize = 16
+
+    local TextBoxUICorner = Instance.new("UICorner", TextBox)
+    TextBoxUICorner.CornerRadius = UDim.new(0, 6)
+
+    TextBox.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            callback(TextBox.Text)
+        end
+    end)
+end
+
+-- Add a slider
+function HenyLib:AddSlider(tabFrame, min, max, callback)
+    local SliderFrame = Instance.new("Frame", tabFrame)
+    SliderFrame.Size = UDim2.new(1, -20, 0, 30)
+    SliderFrame.Position = UDim2.new(0, 10, 0, (#tabFrame:GetChildren() - 1) * 40)
+    SliderFrame.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+
+    local SliderUICorner = Instance.new("UICorner", SliderFrame)
+    SliderUICorner.CornerRadius = UDim.new(0, 6)
+
+    local SliderButton = Instance.new("TextButton", SliderFrame)
+    SliderButton.Size = UDim2.new(0, 20, 1, 0)
+    SliderButton.Position = UDim2.new(0, 0, 0, 0)
+    SliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+
+    local dragging = false
+
+    SliderButton.MouseButton1Down:Connect(function()
+        dragging = true
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local relativePosition = math.clamp((input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X, 0, 1)
+            SliderButton.Position = UDim2.new(relativePosition, -10, 0, 0)
+            local value = math.floor(min + (max - min) * relativePosition)
+            callback(value)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
 end
 
 return HenyLib
