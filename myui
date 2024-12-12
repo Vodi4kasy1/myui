@@ -17,11 +17,6 @@ local theme1
 local theme2
 local theme3
 local toolight = false
-    for i,v in pairs(game.CoreGui:GetChildren()) do
-if v.Name == "By Heny" then
-        v:Destroy()
-    end
-end
 
 if theme == "Normal" then
 theme1 = Color3.fromRGB(32,32,32)
@@ -80,7 +75,7 @@ local TextLabel = Instance.new("TextLabel")
 
 Screen.Name = "By Heny"
 Screen.Parent = game:WaitForChild("CoreGui")
-Screen.Enabled = false
+Screen.Enabled = true
 
 Top.Name = "Top"
 Top.Parent = Screen
