@@ -147,6 +147,39 @@ function HenyLib:CreateTabContent(mainContent, name)
     return tab
 end
 
+-- Create Label
+function HenyLib:CreateLabel(parent, text)
+    local label = createUIElement("TextLabel", {
+        Size = UDim2.new(1, 0, 0, 30),
+        BackgroundTransparency = 1,
+        Text = text,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.SourceSans,
+        TextSize = 18,
+        Position = UDim2.new(0, 5, 0, 5)
+    })
+    label.Parent = parent
+
+    return label
+end
+
+-- Create TextBox
+function HenyLib:CreateTextBox(parent, placeholder)
+    local textbox = createUIElement("TextBox", {
+        Size = UDim2.new(1, -10, 0, 30),
+        BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+        Text = "",
+        PlaceholderText = placeholder,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.SourceSans,
+        TextSize = 18,
+        Position = UDim2.new(0, 5, 0, 40)
+    })
+    textbox.Parent = parent
+
+    return textbox
+end
+
 -- Create Button
 function HenyLib:CreateButton(parent, text, callback)
     local button = createUIElement("TextButton", {
@@ -156,7 +189,7 @@ function HenyLib:CreateButton(parent, text, callback)
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Font = Enum.Font.SourceSansBold,
         TextSize = 18,
-        Position = UDim2.new(0, 5, 0, 5)
+        Position = UDim2.new(0, 5, 0, 80)
     })
     button.Parent = parent
 
@@ -169,34 +202,63 @@ function HenyLib:CreateButton(parent, text, callback)
     return button
 end
 
--- Example usage
-local window, sidebar, mainContent = HenyLib:CreateWindow("My Custom GUI")
+-- Create Slider
+function HenyLib:CreateSlider(parent, minValue, maxValue, callback)
+    local slider = createUIElement("Frame", {
+        Size = UDim2.new(1, -10, 0, 30),
+        BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+        Position = UDim2.new(0, 5, 0, 120)
+    })
+    slider.Parent = parent
 
-local tab1 = HenyLib:CreateTabContent(mainContent, "Tab 1")
-local tab2 = HenyLib:CreateTabContent(mainContent, "Tab 2")
+    local sliderButton = createUIElement("Frame", {
+        Size = UDim2.new(0, 10, 1, 0),
+        BackgroundColor3 = Color3.fromRGB(255, 0, 0),
+        Position = UDim2.new(0, 0, 0, 0)
+    })
+    sliderButton.Parent = slider
 
-HenyLib:CreateButton(tab1, "Click Me!", function()
-    print("Button on Tab 1 clicked!")
-end)
+    local label = createUIElement("TextLabel", {
+        Size = UDim2.new(1, 0, 0, 20),
+        BackgroundTransparency = 1,
+        Text = minValue,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.SourceSans,
+        TextSize = 18,
+        Position = UDim2.new(0, 0, 1, 5)
+    })
+    label.Parent = slider
 
-HenyLib:CreateButton(tab2, "Click Me Too!", function()
-    print("Button on Tab 2 clicked!")
-end)
+    local dragging = false
+    sliderButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+        end
+    end)
 
-HenyLib:CreateTabButton(sidebar, "Tab 1", function()
-    -- Hide other tabs and show Tab 1
-    tab1.Visible = true
-    tab2.Visible = false
-end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
 
-HenyLib:CreateTabButton(sidebar, "Tab 2", function()
-    -- Hide other tabs and show Tab 2
-    tab1.Visible = false
-    tab2.Visible = true
-end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local deltaX = input.Position.X - slider.AbsolutePosition.X
+            local sliderPosition = math.clamp(deltaX, 0, slider.AbsoluteSize.X)
+            sliderButton.Position = UDim2.new(0, sliderPosition, 0, 0)
+            local value = math.floor((sliderPosition / slider.AbsoluteSize.X) * (maxValue - minValue) + minValue)
+            label.Text = value
+            if callback then
+                callback(value)
+            end
+        end
+    end)
 
--- Default Tab is Tab 1
-tab1.Visible = true
-tab2.Visible = false
+    return slider
+end
 
-return HenyLib
+-- Create Toggle
+function HenyLib:CreateToggle(parent, text, callback)
+    local toggleFrame = createUIElement("Frame", {
+        Size = UDim2.new(1, -10, 0, 30),
