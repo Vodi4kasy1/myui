@@ -1,165 +1,110 @@
--- Foxys Library GUI Example
-local library = {}
-local userinterface = Instance.new("ScreenGui")
-userinterface.Name = "FoxysLibraryGUI"
-userinterface.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+-- Heny UI Library
+local HenyLib = {}
 
--- Main Frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 500, 0, 300)
-mainFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
-mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-mainFrame.Parent = userinterface
+-- Services
+local TweenService = game:GetService("TweenService")
 
--- Title Label
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, -50, 0, 30)
-titleLabel.Position = UDim2.new(0, 50, 0, 0)
-titleLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-titleLabel.Text = "Foxys Library GUI"
-titleLabel.Font = Enum.Font.SourceSansBold
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 20
-titleLabel.Parent = mainFrame
+-- Create Main UI
+function HenyLib:CreateUI(title)
+    local ScreenGui = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+    ScreenGui.ResetOnSpawn = false
 
--- Logo Image
-local logoImage = Instance.new("ImageLabel")
-logoImage.Size = UDim2.new(0, 30, 0, 30)
-logoImage.Position = UDim2.new(0, 10, 0, 0)
-logoImage.BackgroundTransparency = 1
-logoImage.Image = "rbxassetid://1234567890" -- Replace with your logo asset ID
-logoImage.Parent = mainFrame
+    local MainFrame = Instance.new("Frame", ScreenGui)
+    MainFrame.Size = UDim2.new(0, 400, 0, 300)
+    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    MainFrame.ClipsDescendants = true
 
--- Left Tab Bar
-local tabBar = Instance.new("Frame")
-tabBar.Size = UDim2.new(0, 100, 1, 0)
-tabBar.BackgroundColor3 = Color3.fromRGB(255, 127, 39)
-tabBar.Parent = mainFrame
+    local UICorner = Instance.new("UICorner", MainFrame)
+    UICorner.CornerRadius = UDim.new(0, 8)
 
-local tabs = {} -- Table to store tabs
-local tabContent = {} -- Store content for each tab
-local selectedTab = nil -- Track selected tab
+    local TitleBar = Instance.new("TextLabel", MainFrame)
+    TitleBar.Size = UDim2.new(1, 0, 0, 25)
+    TitleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    TitleBar.Text = title or "Heny UI"
+    TitleBar.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TitleBar.Font = Enum.Font.SourceSans
+    TitleBar.TextSize = 20
 
--- Tab creation function
-function library:CreateTab(tabName)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1, 0, 0, 40)
-    button.Text = tabName
-    button.Font = Enum.Font.SourceSans
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.BackgroundColor3 = Color3.fromRGB(255, 102, 0)
-    button.Parent = tabBar
+    local UICornerTitle = Instance.new("UICorner", TitleBar)
+    UICornerTitle.CornerRadius = UDim.new(0, 8)
 
-    local content = Instance.new("Frame")
-    content.Size = UDim2.new(1, -100, 1, 0)
-    content.Position = UDim2.new(0, 100, 0, 0)
-    content.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    content.Visible = false
-    content.Parent = mainFrame
+    -- Container for tabs
+    local TabContainer = Instance.new("Frame", MainFrame)
+    TabContainer.Size = UDim2.new(0, 100, 1, -25)
+    TabContainer.Position = UDim2.new(0, 0, 0, 25)
+    TabContainer.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 
-    button.MouseButton1Click:Connect(function()
-        if selectedTab then
-            tabContent[selectedTab].Visible = false
-        end
-        selectedTab = tabName
-        content.Visible = true
-    end)
+    local TabUICorner = Instance.new("UICorner", TabContainer)
+    TabUICorner.CornerRadius = UDim.new(0, 8)
 
-    tabs[tabName] = button
-    tabContent[tabName] = content
+    -- Container for content
+    local ContentContainer = Instance.new("Frame", MainFrame)
+    ContentContainer.Size = UDim2.new(1, -100, 1, -25)
+    ContentContainer.Position = UDim2.new(0, 100, 0, 25)
+    ContentContainer.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+
+    local ContentUICorner = Instance.new("UICorner", ContentContainer)
+    ContentUICorner.CornerRadius = UDim.new(0, 8)
+
+    -- Tabs and Elements Storage
+    self.Tabs = {}
+    self.Elements = {}
+    self.TabContainer = TabContainer
+    self.ContentContainer = ContentContainer
+    return self
 end
 
--- Add UI Elements to Tabs
-function library:AddButton(tabName, buttonText, callback)
-    local content = tabContent[tabName]
-    if not content then return end
+-- Add a new tab
+function HenyLib:AddTab(tabName)
+    local Button = Instance.new("TextButton", self.TabContainer)
+    Button.Size = UDim2.new(1, 0, 0, 25)
+    Button.Position = UDim2.new(0, 0, 0, #self.Tabs * 30)
+    Button.Text = tabName
+    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 200, 0, 40)
-    button.Position = UDim2.new(0, 10, 0, #content:GetChildren() * 50)
-    button.Text = buttonText
-    button.Font = Enum.Font.SourceSans
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    button.Parent = content
+    local TabUICorner = Instance.new("UICorner", Button)
+    TabUICorner.CornerRadius = UDim.new(0, 6)
 
-    button.MouseButton1Click:Connect(function()
-        callback()
+    local ContentFrame = Instance.new("Frame", self.ContentContainer)
+    ContentFrame.Size = UDim2.new(1, 0, 1, 0)
+    ContentFrame.Visible = false
+    ContentFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+
+    local UICornerContent = Instance.new("UICorner", ContentFrame)
+    UICornerContent.CornerRadius = UDim.new(0, 8)
+
+    table.insert(self.Tabs, {
+        Name = tabName,
+        Button = Button,
+        Content = ContentFrame
+    })
+
+    Button.MouseButton1Click:Connect(function()
+        for _, tab in pairs(self.Tabs) do
+            tab.Content.Visible = false
+        end
+        ContentFrame.Visible = true
     end)
+
+    return ContentFrame
 end
 
-function library:AddLabel(tabName, text)
-    local content = tabContent[tabName]
-    if not content then return end
+-- Add a button
+function HenyLib:AddButton(tabFrame, buttonText, callback)
+    local Button = Instance.new("TextButton", tabFrame)
+    Button.Size = UDim2.new(1, -20, 0, 30)
+    Button.Position = UDim2.new(0, 10, 0, #tabFrame:GetChildren() * 40)
+    Button.Text = buttonText
+    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0, 200, 0, 40)
-    label.Position = UDim2.new(0, 10, 0, #content:GetChildren() * 50)
-    label.Text = text
-    label.Font = Enum.Font.SourceSans
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    label.Parent = content
+    local ButtonUICorner = Instance.new("UICorner", Button)
+    ButtonUICorner.CornerRadius = UDim.new(0, 6)
+
+    Button.MouseButton1Click:Connect(callback)
 end
 
-function library:AddSlider(tabName, sliderName, min, max, callback)
-    local content = tabContent[tabName]
-    if not content then return end
-
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(0, 200, 0, 50)
-    sliderFrame.Position = UDim2.new(0, 10, 0, #content:GetChildren() * 50)
-    sliderFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    sliderFrame.Parent = content
-
-    local sliderLabel = Instance.new("TextLabel")
-    sliderLabel.Size = UDim2.new(1, 0, 0.5, 0)
-    sliderLabel.Text = sliderName
-    sliderLabel.Font = Enum.Font.SourceSans
-    sliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    sliderLabel.BackgroundTransparency = 1
-    sliderLabel.Parent = sliderFrame
-
-    local sliderBar = Instance.new("Frame")
-    sliderBar.Size = UDim2.new(1, 0, 0.5, 0)
-    sliderBar.Position = UDim2.new(0, 0, 0.5, 0)
-    sliderBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    sliderBar.Parent = sliderFrame
-
-    local sliderHandle = Instance.new("Frame")
-    sliderHandle.Size = UDim2.new(0, 10, 1, 0)
-    sliderHandle.BackgroundColor3 = Color3.fromRGB(255, 127, 39)
-    sliderHandle.Parent = sliderBar
-
-    local dragging = false
-
-    sliderHandle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-        end
-    end)
-
-    sliderHandle.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-
-    game:GetService("UserInputService").InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local scale = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
-            sliderHandle.Position = UDim2.new(scale, 0, 0, 0)
-            local value = math.floor(min + (max - min) * scale)
-            callback(value)
-        end
-    end)
-end
-
--- Example Usage
-library:CreateTab("Home")
-library:AddButton("Home", "Click Me", function()
-    print("Button clicked!")
-end)
-library:AddLabel("Home", "Welcome to Foxys Library!")
-
+return HenyLib
