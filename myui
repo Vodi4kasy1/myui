@@ -4,6 +4,7 @@ local HenyLib = {}
 -- Services
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Create UI elements with smooth corners and animations
 local function createUIElement(elementType, properties)
@@ -33,14 +34,16 @@ function HenyLib:CreateWindow(title)
     local screenGui = createUIElement("ScreenGui", {ResetOnSpawn = false})
     screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
+    -- Main Window Frame
     local window = createUIElement("Frame", {
-        Size = UDim2.new(0, 400, 0, 300),
+        Size = UDim2.new(0, 600, 0, 400),
         BackgroundColor3 = Color3.fromRGB(45, 45, 45),
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.new(0.5, 0, 0.5, 0)
     })
     window.Parent = screenGui
 
+    -- Title Bar
     local titleBar = createUIElement("TextLabel", {
         Size = UDim2.new(1, 0, 0, 40),
         BackgroundColor3 = Color3.fromRGB(35, 35, 35),
@@ -50,6 +53,22 @@ function HenyLib:CreateWindow(title)
         TextSize = 20
     })
     titleBar.Parent = window
+
+    -- Sidebar (on the left for tabs)
+    local sidebar = createUIElement("Frame", {
+        Size = UDim2.new(0, 150, 1, 0),
+        BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+        Position = UDim2.new(0, 0, 0, 0)
+    })
+    sidebar.Parent = window
+
+    -- Main Content Frame (where tabs will show)
+    local mainContent = createUIElement("Frame", {
+        Size = UDim2.new(1, -150, 1, -40),
+        Position = UDim2.new(0, 150, 0, 40),
+        BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+    })
+    mainContent.Parent = window
 
     -- Drag functionality for window
     local dragging = false
@@ -82,27 +101,48 @@ function HenyLib:CreateWindow(title)
         end
     end)
 
-    return window
+    return window, sidebar, mainContent
 end
 
--- Create Tab
-function HenyLib:CreateTab(parent, name)
-    local tab = createUIElement("Frame", {
-        Size = UDim2.new(1, 0, 0, 30),
-        BackgroundColor3 = Color3.fromRGB(55, 55, 55)
-    })
-    tab.Parent = parent
-
-    local tabName = createUIElement("TextLabel", {
-        Size = UDim2.new(1, -10, 1, 0),
-        BackgroundTransparency = 1,
+-- Create Tab Button (inside Sidebar)
+function HenyLib:CreateTabButton(sidebar, name, callback)
+    local button = createUIElement("TextButton", {
+        Size = UDim2.new(1, 0, 0, 50),
+        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
         Text = name,
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Font = Enum.Font.SourceSans,
-        TextSize = 18,
-        Position = UDim2.new(0, 5, 0, 0)
+        TextSize = 18
     })
-    tabName.Parent = tab
+    button.Parent = sidebar
+
+    button.MouseButton1Click:Connect(function()
+        if callback then
+            callback()
+        end
+    end)
+
+    return button
+end
+
+-- Create a Tab (main content area)
+function HenyLib:CreateTabContent(mainContent, name)
+    local tab = createUIElement("Frame", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = Color3.fromRGB(45, 45, 45),
+        Visible = false -- Initially hidden
+    })
+    tab.Parent = mainContent
+
+    local tabLabel = createUIElement("TextLabel", {
+        Size = UDim2.new(1, 0, 0, 40),
+        BackgroundColor3 = Color3.fromRGB(35, 35, 35),
+        Text = "Welcome to " .. name,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.SourceSansBold,
+        TextSize = 22
+    })
+    tabLabel.Parent = tab
 
     return tab
 end
@@ -129,7 +169,34 @@ function HenyLib:CreateButton(parent, text, callback)
     return button
 end
 
--- Additional components (Slider, TextBox, Label, Toggle) could be added similarly
--- (Implementation skipped for brevity)
+-- Example usage
+local window, sidebar, mainContent = HenyLib:CreateWindow("My Custom GUI")
+
+local tab1 = HenyLib:CreateTabContent(mainContent, "Tab 1")
+local tab2 = HenyLib:CreateTabContent(mainContent, "Tab 2")
+
+HenyLib:CreateButton(tab1, "Click Me!", function()
+    print("Button on Tab 1 clicked!")
+end)
+
+HenyLib:CreateButton(tab2, "Click Me Too!", function()
+    print("Button on Tab 2 clicked!")
+end)
+
+HenyLib:CreateTabButton(sidebar, "Tab 1", function()
+    -- Hide other tabs and show Tab 1
+    tab1.Visible = true
+    tab2.Visible = false
+end)
+
+HenyLib:CreateTabButton(sidebar, "Tab 2", function()
+    -- Hide other tabs and show Tab 2
+    tab1.Visible = false
+    tab2.Visible = true
+end)
+
+-- Default Tab is Tab 1
+tab1.Visible = true
+tab2.Visible = false
 
 return HenyLib
