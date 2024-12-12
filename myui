@@ -59,6 +59,12 @@ elseif theme == "Aleg" then
     theme3 = Color3.fromRGB(255, 215, 0)
     print("Theme selected: "..theme)
 end
+elseif theme == "Ocean" then
+    theme1 = Color3.fromRGB(6,66,115)
+    theme2 = Color3.fromRGB(118,182,196)
+    theme3 = Color3.fromRGB(127,205,255)
+    print("Theme selected: "..theme)
+end
 
 local Screen = Instance.new("ScreenGui")
 local Top = Instance.new("ImageLabel")
