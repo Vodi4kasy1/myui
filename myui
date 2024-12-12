@@ -1,8 +1,9 @@
--- Heny UI Library
+-- Heny UI Library with Animations and Additional Features
 local HenyLib = {}
 
 -- Services
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 -- Create Main UI
 function HenyLib:CreateUI(title)
@@ -30,6 +31,65 @@ function HenyLib:CreateUI(title)
     local UICornerTitle = Instance.new("UICorner", TitleBar)
     UICornerTitle.CornerRadius = UDim.new(0, 8)
 
+    -- Draggable functionality
+    local dragging, dragStart, startPos
+
+    MainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainFrame.Position
+        end
+    end)
+
+    MainFrame.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    -- Close Button
+    local CloseButton = Instance.new("TextButton", MainFrame)
+    CloseButton.Size = UDim2.new(0, 25, 0, 25)
+    CloseButton.Position = UDim2.new(1, -30, 0, 5)
+    CloseButton.Text = "X"
+    CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CloseButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+
+    CloseButton.MouseButton1Click:Connect(function()
+        local tween = TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)})
+        tween:Play()
+        tween.Completed:Connect(function()
+            MainFrame:Destroy()
+        end)
+    end)
+
+    -- Hide/Show GUI with RightAlt
+    local hidden = false
+    UserInputService.InputBegan:Connect(function(input, processed)
+        if not processed and input.KeyCode == Enum.KeyCode.RightAlt then
+            hidden = not hidden
+            if hidden then
+                local tween = TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1})
+                tween:Play()
+                tween.Completed:Connect(function()
+                    MainFrame.Visible = false
+                end)
+            else
+                MainFrame.Visible = true
+                local tween = TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 0})
+                tween:Play()
+            end
+        end
+    end)
+
     -- Container for tabs
     local TabContainer = Instance.new("Frame", MainFrame)
     TabContainer.Size = UDim2.new(0, 100, 1, -25)
@@ -53,6 +113,7 @@ function HenyLib:CreateUI(title)
     self.Elements = {}
     self.TabContainer = TabContainer
     self.ContentContainer = ContentContainer
+    self.MainFrame = MainFrame
     return self
 end
 
