@@ -32,10 +32,10 @@ elseif theme == "Blood" then
     theme2 = Color3.fromRGB(163, 0, 0)
     theme3 = Color3.fromRGB(181, 181, 181)
     print("Theme selected: "..theme)
-elseif theme == "DarkBlue" then
-    theme1 = Color3.fromRGB(0, 2, 54)
-    theme2 = Color3.fromRGB(17, 0, 84)
-    theme3 = Color3.fromRGB(255, 255, 255)
+elseif theme == "Heny" then
+    theme1 = Color3.fromRGB(60, 0, 138)
+    theme2 = Color3.fromRGB(0, 3, 105)
+    theme3 = Color3.fromRGB(0, 0, 0)
     toolight = true
     print("Theme selected: "..theme)
 elseif theme == "Amethyst" then
