@@ -586,3 +586,93 @@ function InsideTab:CreateCheckbox(text,callback)
     MainCheatFrame.Parent = Cheat
     MainCheatFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     MainCheatFrame.BackgroundTransparency = 1.00
+MainCheatFrame.BackgroundTransparency = 1.000
+    MainCheatFrame.Position = UDim2.new(1, 0, 0.129999995, 0)
+    MainCheatFrame.Size = UDim2.new(0, 18, 0, 18)
+    MainCheatFrame.Image = "rbxassetid://3570695787"
+    MainCheatFrame.ImageColor3 = theme2
+    MainCheatFrame.ScaleType = Enum.ScaleType.Slice
+    MainCheatFrame.SliceCenter = Rect.new(100, 100, 100, 100)
+    MainCheatFrame.SliceScale = 0.020
+    
+    InsideCheatFrame.Name = "Frame"
+    InsideCheatFrame.Parent = MainCheatFrame
+    InsideCheatFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    InsideCheatFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    InsideCheatFrame.BackgroundTransparency = 1.000
+    InsideCheatFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    InsideCheatFrame.Size = UDim2.new(0, 14, 0, 14)
+    InsideCheatFrame.Image = "rbxassetid://3570695787"
+    InsideCheatFrame.ImageColor3 = theme2
+    InsideCheatFrame.ScaleType = Enum.ScaleType.Slice
+    InsideCheatFrame.SliceCenter = Rect.new(100, 100, 100, 100)
+    InsideCheatFrame.SliceScale = 0.020
+    
+    CheatButton.Parent = MainCheatFrame
+    CheatButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    CheatButton.BackgroundTransparency = 1.000
+    CheatButton.Size = UDim2.new(0, 18, 0, 18)
+    CheatButton.Font = Enum.Font.SourceSans
+    CheatButton.Text = ""
+    CheatButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+    CheatButton.TextSize = 14.000
+    CheatButton.ZIndex = 2
+
+    local enabledcheat = false
+    function triggercheat()
+    enabledcheat = not enabledcheat
+    pcall(callback,enabledcheat)
+    play("rbxassetid://6309164078")
+    if enabledcheat then
+        InsideCheatFrame.ImageColor3 = theme3
+    else
+        InsideCheatFrame.ImageColor3 = theme2
+    end
+    end
+    
+    CheatButton.MouseButton1Click:Connect(triggercheat)
+end
+
+function InsideTab:CreateButton(text, callback)
+    text = text or "New Button"
+    callback = callback or function() end
+    local Button = Instance.new("TextButton")
+    local Button_Roundify_3px = Instance.new("ImageLabel")
+    Button.Name = "Btn"
+    Button.Parent = Frame
+    Button.BackgroundColor3 = Color3.fromRGB(116, 116, 116)
+    Button.BackgroundTransparency = 1.000
+    Button.BorderSizePixel = 0
+    Button.Position = UDim2.new(-0.00554528646, 0, 0.0607142858, 0)
+    Button.Size = UDim2.new(0, 36, 0, 21)
+    Button.ZIndex = 2
+    Button.Font = Enum.Font.SourceSansSemibold
+    Button.Text = text
+    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Button.TextSize = 14.000
+    
+    Button_Roundify_3px.Name = "Button_Roundify_3px"
+    Button_Roundify_3px.Parent = Button
+    Button_Roundify_3px.Active = true
+    Button_Roundify_3px.AnchorPoint = Vector2.new(0.5, 0.5)
+    Button_Roundify_3px.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Button_Roundify_3px.BackgroundTransparency = 1.000
+    Button_Roundify_3px.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Button_Roundify_3px.Selectable = true
+    Button_Roundify_3px.Size = UDim2.new(1, 0, 1, 0)
+    Button_Roundify_3px.Image = "rbxassetid://3570695787"
+    Button_Roundify_3px.ImageColor3 = theme2
+    Button_Roundify_3px.ScaleType = Enum.ScaleType.Slice
+    Button_Roundify_3px.SliceCenter = Rect.new(100, 100, 100, 100)
+    Button_Roundify_3px.SliceScale = 0.030
+
+    Button.MouseButton1Click:Connect(function()
+pcall(callback)
+play("rbxassetid://178104975")
+    end)
+end
+return InsideTab
+end
+return InsideLibrary
+end
+return library
