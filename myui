@@ -18,45 +18,45 @@ local theme2
 local theme3
 
 if theme == "Normal" then
-theme1 = Color3.fromRGB(153, 153, 153)
-theme2 = Color3.fromRGB(99, 99, 99)
-theme3 = Color3.fromRGB(41, 41, 41)
+theme1 = Color3.fromRGB(32,32,32)
+theme2 = Color3.fromRGB(26,26,26)
+theme3 = Color3.fromRGB(43, 83, 186)
 print("Theme selected: "..theme)
 elseif theme == "Green" then
-    theme1 = Color3.fromRGB(0, 255, 42)
-    theme2 = Color3.fromRGB(56, 148, 33)
-    theme3 = Color3.fromRGB(18, 69, 0)
+    theme1 = Color3.fromRGB(0, 255, 72)
+    theme2 = Color3.fromRGB(0, 150, 43)
+    theme3 = Color3.fromRGB(0, 162, 255)
     print("Theme selected: "..theme)
 elseif theme == "Blood" then
-    theme1 = Color3.fromRGB(135, 0, 0)
-    theme2 = Color3.fromRGB(94, 0, 0)
-    theme3 = Color3.fromRGB(92, 0, 0)
+    theme1 = Color3.fromRGB(102, 0, 0)
+    theme2 = Color3.fromRGB(163, 0, 0)
+    theme3 = Color3.fromRGB(181, 181, 181)
     print("Theme selected: "..theme)
 elseif theme == "White" then
-    theme1 = Color3.fromRGB(222, 222, 222)
-    theme2 = Color3.fromRGB(255, 255, 255)
-    theme3 = Color3.fromRGB(168, 168, 168)
+    theme1 = Color3.fromRGB(255, 255, 255)
+    theme2 = Color3.fromRGB(207, 207, 207)
+    theme3 = Color3.fromRGB(0, 0, 0)
     toolight = true
     print("Theme selected: "..theme)
 elseif theme == "Amethyst" then
-    theme1 = Color3.fromRGB(174, 0, 255)
-    theme2 = Color3.fromRGB(129, 0, 189)
-    theme3 = Color3.fromRGB(91, 0, 133)
+    theme1 = Color3.fromRGB(108, 0, 191)
+    theme2 = Color3.fromRGB(131, 0, 232)
+    theme3 = Color3.fromRGB(110, 110, 110)
     print("Theme selected: "..theme)
 elseif theme == "Blue" then
-    theme1 = Color3.fromRGB(0, 42, 255)
-    theme2 = Color3.fromRGB(0, 196, 255)
-    theme3 = Color3.fromRGB(0, 255, 196)
+    theme1 = Color3.fromRGB(4, 0, 255)
+    theme2 = Color3.fromRGB(3, 0, 184)
+    theme3 = Color3.fromRGB(196, 196, 196)
     print("Theme selected: "..theme)
-elseif theme == "Crimson" then
-    theme1 = Color3.fromRGB(32,32,32)
-    theme2 = Color3.fromRGB(26,26,26)
-    theme3 = Color3.fromRGB(214, 40, 57)
+elseif theme == "Crush Test" then
+    theme1 = Color3.fromRGB(221, 255, 0)
+    theme2 = Color3.fromRGB(255, 213, 0)
+    theme3 = Color3.fromRGB(0, 0, 0)
     print("Theme selected: "..theme)
-elseif theme == "Deep Sea" then
-    theme1 = Color3.fromRGB(32,32,32)
-    theme2 = Color3.fromRGB(26,26,26)
-    theme3 = Color3.fromRGB(40, 81, 214)
+elseif theme == "test" then
+    theme1 = Color3.fromRGB(255, 0, 229)
+    theme2 = Color3.fromRGB(144, 0, 255)
+    theme3 = Color3.fromRGB(0, 0, 0)
     print("Theme selected: "..theme)
 end
 
