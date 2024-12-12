@@ -1,4 +1,10 @@
 local library = {}
+function play(id)
+    for _, v in next, workspace:GetChildren() do
+        if v.Name == "GUISound" then
+            v:Destroy()
+        end
+    end
     local Sound = Instance.new("Sound", workspace)
     Sound.Name = "GUISound"
     Sound.Volume = 6
@@ -11,6 +17,11 @@ local theme1
 local theme2
 local theme3
 local toolight = false
+    for i,v in pairs(game.CoreGui:GetChildren()) do
+if v.Name == "By Heny" then
+        v:Destroy()
+    end
+end
 
 if theme == "Normal" then
 theme1 = Color3.fromRGB(32,32,32)
@@ -54,24 +65,6 @@ elseif theme == "Deep Sea" then
     theme3 = Color3.fromRGB(40, 81, 214)
     print("Theme selected: "..theme)
 end
-elseif theme == "Test" then
-    theme1 = Color3.fromRGB(32,32,32)
-    theme2 = Color3.fromRGB(26,26,26)
-    theme3 = Color3.fromRGB(40, 81, 214)
-    print("Theme selected: "..theme)
-end
-elseif theme == "Oliv" then
-    theme1 = Color3.fromRGB(32,32,32)
-    theme2 = Color3.fromRGB(26,26,26)
-    theme3 = Color3.fromRGB(40, 81, 214)
-    print("Theme selected: "..theme)
-end
-elseif theme == "Seev" then
-    theme1 = Color3.fromRGB(32,32,32)
-    theme2 = Color3.fromRGB(26,26,26)
-    theme3 = Color3.fromRGB(40, 81, 214)
-    print("Theme selected: "..theme)
-end
 
 local Screen = Instance.new("ScreenGui")
 local Top = Instance.new("ImageLabel")
@@ -87,7 +80,7 @@ local TextLabel = Instance.new("TextLabel")
 
 Screen.Name = "By Heny"
 Screen.Parent = game:WaitForChild("CoreGui")
-Screen.Enabled = true
+Screen.Enabled = false
 
 Top.Name = "Top"
 Top.Parent = Screen
