@@ -53,10 +53,10 @@ elseif theme == "Crush Test" then
     theme2 = Color3.fromRGB(255, 213, 0)
     theme3 = Color3.fromRGB(0, 0, 0)
     print("Theme selected: "..theme)
-elseif theme == "test" then
-    theme1 = Color3.fromRGB(255, 0, 229)
-    theme2 = Color3.fromRGB(144, 0, 255)
-    theme3 = Color3.fromRGB(0, 0, 0)
+elseif theme == "Aleg" then
+    theme1 = Color3.fromRGB(255, 215, 0)
+    theme2 = Color3.fromRGB(1, 50, 32)
+    theme3 = Color3.fromRGB(0, 33, 55)
     print("Theme selected: "..theme)
 end
 
