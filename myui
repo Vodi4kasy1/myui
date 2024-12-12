@@ -20,49 +20,43 @@ local theme3
 if theme == "Normal" then
 theme1 = Color3.fromRGB(32,32,32)
 theme2 = Color3.fromRGB(26,26,26)
-theme3 = Color3.fromRGB(43, 83, 186)
+theme3 = Color3.fromRGB(176, 148, 255)
 print("Theme selected: "..theme)
-elseif theme == "Green" then
-    theme1 = Color3.fromRGB(0, 255, 72)
-    theme2 = Color3.fromRGB(0, 150, 43)
-    theme3 = Color3.fromRGB(0, 162, 255)
+elseif theme == "Reverse" then
+    theme1 = Color3.fromRGB(26,26,26)
+    theme2 = Color3.fromRGB(32,32,32)
+    theme3 = Color3.fromRGB(176, 148, 255)
     print("Theme selected: "..theme)
 elseif theme == "Blood" then
-    theme1 = Color3.fromRGB(102, 0, 0)
-    theme2 = Color3.fromRGB(163, 0, 0)
-    theme3 = Color3.fromRGB(181, 181, 181)
+    theme1 = Color3.fromRGB(32,32,32)
+    theme2 = Color3.fromRGB(26,26,26)
+    theme3 = Color3.fromRGB(138, 3, 3)
     print("Theme selected: "..theme)
-elseif theme == "Heny" then
-    theme1 = Color3.fromRGB(60, 0, 138)
-    theme2 = Color3.fromRGB(0, 3, 105)
-    theme3 = Color3.fromRGB(0, 0, 0)
+elseif theme == "Gainsboro" then
+    theme1 = Color3.fromRGB(32,32,32)
+    theme2 = Color3.fromRGB(26,26,26)
+    theme3 = Color3.fromRGB(220, 220, 221)
     toolight = true
     print("Theme selected: "..theme)
-elseif theme == "Amethyst" then
-    theme1 = Color3.fromRGB(108, 0, 191)
-    theme2 = Color3.fromRGB(131, 0, 232)
-    theme3 = Color3.fromRGB(110, 110, 110)
+elseif theme == "Canary" then
+    theme1 = Color3.fromRGB(32,32,32)
+    theme2 = Color3.fromRGB(26,26,26)
+    theme3 = Color3.fromRGB(255, 253, 130)
     print("Theme selected: "..theme)
-elseif theme == "Blue" then
-    theme1 = Color3.fromRGB(4, 0, 255)
-    theme2 = Color3.fromRGB(3, 0, 184)
-    theme3 = Color3.fromRGB(196, 196, 196)
+elseif theme == "Emerald" then
+    theme1 = Color3.fromRGB(32,32,32)
+    theme2 = Color3.fromRGB(26,26,26)
+    theme3 = Color3.fromRGB(68, 207, 108)
     print("Theme selected: "..theme)
-elseif theme == "Crush Test" then
-    theme1 = Color3.fromRGB(221, 255, 0)
-    theme2 = Color3.fromRGB(255, 213, 0)
-    theme3 = Color3.fromRGB(0, 0, 0)
+elseif theme == "Crimson" then
+    theme1 = Color3.fromRGB(32,32,32)
+    theme2 = Color3.fromRGB(26,26,26)
+    theme3 = Color3.fromRGB(214, 40, 57)
     print("Theme selected: "..theme)
-elseif theme == "Aleg" then
-    theme1 = Color3.fromRGB(1, 50, 32)
-    theme2 = Color3.fromRGB(0, 33, 55)
-    theme3 = Color3.fromRGB(255, 215, 0)
-    print("Theme selected: "..theme)
-end
-elseif theme == "Ocean" then
-    theme1 = Color3.fromRGB(6,66,115)
-    theme2 = Color3.fromRGB(118,182,196)
-    theme3 = Color3.fromRGB(127,205,255)
+elseif theme == "Deep Sea" then
+    theme1 = Color3.fromRGB(32,32,32)
+    theme2 = Color3.fromRGB(26,26,26)
+    theme3 = Color3.fromRGB(40, 81, 214)
     print("Theme selected: "..theme)
 end
 
@@ -578,8 +572,8 @@ function InsideTab:CreateCheckbox(text,callback)
     MainCheatFrame.Name = "MainCheatFrame"
     MainCheatFrame.Parent = Cheat
     MainCheatFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    MainCheatFrame.BackgroundTransparency = 1.000
-    MainCheatFrame.Position = UDim2.new(1, 0, 0.129999995, 0)
+    MainCheatFrame.BackgroundTransparency = 1.00
+MainCheatFrame.Position = UDim2.new(1, 0, 0.129999995, 0)
     MainCheatFrame.Size = UDim2.new(0, 18, 0, 18)
     MainCheatFrame.Image = "rbxassetid://3570695787"
     MainCheatFrame.ImageColor3 = theme2
