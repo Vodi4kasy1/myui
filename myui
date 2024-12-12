@@ -18,35 +18,35 @@ local theme2
 local theme3
 
 if theme == "Normal" then
-theme1 = Color3.fromRGB(32,32,32)
-theme2 = Color3.fromRGB(26,26,26)
-theme3 = Color3.fromRGB(176, 148, 255)
+theme1 = Color3.fromRGB(153, 153, 153)
+theme2 = Color3.fromRGB(99, 99, 99)
+theme3 = Color3.fromRGB(41, 41, 41)
 print("Theme selected: "..theme)
-elseif theme == "Reverse" then
-    theme1 = Color3.fromRGB(26,26,26)
-    theme2 = Color3.fromRGB(32,32,32)
-    theme3 = Color3.fromRGB(176, 148, 255)
+elseif theme == "Green" then
+    theme1 = Color3.fromRGB(0, 255, 42)
+    theme2 = Color3.fromRGB(56, 148, 33)
+    theme3 = Color3.fromRGB(18, 69, 0)
     print("Theme selected: "..theme)
 elseif theme == "Blood" then
-    theme1 = Color3.fromRGB(32,32,32)
-    theme2 = Color3.fromRGB(26,26,26)
-    theme3 = Color3.fromRGB(138, 3, 3)
+    theme1 = Color3.fromRGB(135, 0, 0)
+    theme2 = Color3.fromRGB(94, 0, 0)
+    theme3 = Color3.fromRGB(92, 0, 0)
     print("Theme selected: "..theme)
-elseif theme == "Gainsboro" then
-    theme1 = Color3.fromRGB(32,32,32)
-    theme2 = Color3.fromRGB(26,26,26)
-    theme3 = Color3.fromRGB(220, 220, 221)
+elseif theme == "White" then
+    theme1 = Color3.fromRGB(222, 222, 222)
+    theme2 = Color3.fromRGB(255, 255, 255)
+    theme3 = Color3.fromRGB(168, 168, 168)
     toolight = true
     print("Theme selected: "..theme)
-elseif theme == "Canary" then
-    theme1 = Color3.fromRGB(32,32,32)
-    theme2 = Color3.fromRGB(26,26,26)
-    theme3 = Color3.fromRGB(255, 253, 130)
+elseif theme == "Amethyst" then
+    theme1 = Color3.fromRGB(174, 0, 255)
+    theme2 = Color3.fromRGB(129, 0, 189)
+    theme3 = Color3.fromRGB(91, 0, 133)
     print("Theme selected: "..theme)
-elseif theme == "Emerald" then
-    theme1 = Color3.fromRGB(32,32,32)
-    theme2 = Color3.fromRGB(26,26,26)
-    theme3 = Color3.fromRGB(68, 207, 108)
+elseif theme == "Blue" then
+    theme1 = Color3.fromRGB(0, 42, 255)
+    theme2 = Color3.fromRGB(0, 196, 255)
+    theme3 = Color3.fromRGB(0, 255, 196)
     print("Theme selected: "..theme)
 elseif theme == "Crimson" then
     theme1 = Color3.fromRGB(32,32,32)
