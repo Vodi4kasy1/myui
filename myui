@@ -72,7 +72,7 @@ local TextLabel = Instance.new("TextLabel")
 
 --Properties:
 
-Screen.Name = "By Shaddow"
+Screen.Name = "By Heny"
 Screen.Parent = game:WaitForChild("CoreGui")
 Screen.Enabled = true
 
