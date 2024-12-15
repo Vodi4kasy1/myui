@@ -1,0 +1,115 @@
+local HenyLib = {}
+HenyLib.__index = HenyLib
+
+function HenyLib.new()
+    local self = setmetatable({}, HenyLib)
+    -- Создаем основное GUI
+    self.gui = Instance.new("ScreenGui")
+    self.gui.Name = "HenyLibGUI"
+    
+    return self
+end
+
+function HenyLib:CreateTab(name)
+    -- Создание вкладки
+    local tab = Instance.new("Frame")
+    tab.Name = name
+    -- Настройки стиля и расположения
+    tab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    tab.Size = UDim2.new(0, 100, 0, 100) -- Примерный размер
+    tab.Parent = self.gui
+    
+    return tab
+end
+
+function HenyLib:CreateButton(parent, text)
+    -- Создание кнопки
+    local button = Instance.new("TextButton")
+    button.Parent = parent
+    button.Text = text
+    -- Настройки стиля
+    button.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    button.Size = UDim2.new(0, 100, 0, 50) -- Примерный размер
+    
+    return button
+end
+
+function HenyLib:CreateToggle(parent, initialValue)
+    -- Создание переключателя
+    local toggle = Instance.new("BoolValue")
+    toggle.Parent = parent
+    toggle.Value = initialValue
+    
+    local button = Instance.new("TextButton")
+    button.Parent = parent
+    button.Text = initialValue and "On" or "Off"
+    button.BackgroundColor3 = initialValue and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    button.Size = UDim2.new(0, 100, 0, 50)
+    
+    button.MouseButton1Click:Connect(function()
+        toggle.Value = not toggle.Value
+        button.Text = toggle.Value and "On" or "Off"
+        button.BackgroundColor3 = toggle.Value and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    end)
+    
+    return toggle
+end
+
+function HenyLib:CreateSlider(parent, minValue, maxValue, initialValue)
+    -- Создание ползунка
+    local slider = Instance.new("TextButton")
+    slider.Parent = parent
+    slider.Text = tostring(initialValue)
+    slider.Size = UDim2.new(0, 100, 0, 20)
+    -- Настройки стиля
+
+    -- Добавить логику перемещения ползунка и изменения значения
+    -- ...
+
+    return slider
+end
+
+function HenyLib:CreateDropdown(parent, options)
+    -- Создание выпадающего списка
+    local dropdown = Instance.new("Frame")
+    dropdown.Parent = parent
+    dropdown.Size = UDim2.new(0, 100, 0, 50)
+    -- Настройки стиля
+    
+    -- Логика для отображения и выбора опций
+    -- ...
+    
+    return dropdown
+end
+
+function HenyLib:CreateTextBox(parent, placeholderText)
+    -- Создание текстового поля
+    local textBox = Instance.new("TextBox")
+    textBox.Parent = parent
+    textBox.PlaceholderText = placeholderText
+    textBox.Size = UDim2.new(0, 200, 0, 50)
+    -- Настройки стиля
+    
+    return textBox
+end
+
+function HenyLib:CreateLabel(parent, text)
+    -- Создание метки
+    local label = Instance.new("TextLabel")
+    label.Parent = parent
+    label.Text = text
+    label.Size = UDim2.new(0, 200, 0, 50)
+    -- Настройки стиля
+    
+    return label
+end
+
+function HenyLib:Show()
+    self.gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+end
+
+function HenyLib:Remove()
+    self.gui:Destroy()
+end
+
+return HenyLib
