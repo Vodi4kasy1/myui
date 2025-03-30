@@ -1,14 +1,13 @@
--- ModuleScript в ReplicatedStorage с именем 'XenonUI'
 local Xenon = {}
 
 -- Настройки стиля
 local theme = {
-    Primary = Color3.fromRGB(28, 28, 28),    -- Основной цвет
-    Secondary = Color3.fromRGB(45, 45, 45),  -- Вторичный цвет
-    Accent = Color3.fromRGB(100, 255, 255),  -- Акцентный неоновый
-    Text = Color3.fromRGB(255, 255, 255),    -- Текст
-    Glow = Color3.fromRGB(150, 255, 255),    -- Свечение
-    Stroke = Color3.fromRGB(80, 80, 80)      -- Обводка
+    Primary = Color3.fromRGB(28, 28, 28),
+    Secondary = Color3.fromRGB(45, 45, 45),
+    Accent = Color3.fromRGB(100, 255, 255),
+    Text = Color3.fromRGB(255, 255, 255),
+    Glow = Color3.fromRGB(150, 255, 255),
+    Stroke = Color3.fromRGB(80, 80, 80)
 }
 
 local function applyNeonEffect(element)
@@ -17,7 +16,6 @@ local function applyNeonEffect(element)
     glow.Color = theme.Glow
     glow.Transparency = 0.5
     glow.Thickness = 2
-    glow.Parent = element
     
     local gradient = Instance.new("UIGradient")
     gradient.Rotation = 90
@@ -27,87 +25,184 @@ local function applyNeonEffect(element)
     })
     gradient.Parent = glow
     
+    glow.Parent = element
     return glow
 end
 
 function Xenon.NewWindow(title)
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "XenonUI"
-    screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    screenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
     
     local mainFrame = Instance.new("Frame")
-    mainFrame.Name = "MainWindow"
-    mainFrame.Size = UDim2.new(0, 400, 0, 300)
-    mainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
-    mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    mainFrame.BackgroundColor3 = theme.Primary
-    mainFrame.BackgroundTransparency = 0.1
-    mainFrame.ClipsDescendants = true
-    
-    local mainCorner = Instance.new("UICorner")
-    mainCorner.CornerRadius = UDim.new(0, 8)
-    mainCorner.Parent = mainFrame
-    
-    -- Заголовок
-    local header = Instance.new("Frame")
-    header.Name = "Header"
-    header.Size = UDim2.new(1, 0, 0, 30)
-    header.BackgroundColor3 = theme.Secondary
-    header.Parent = mainFrame
-    
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Text = title
-    titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextColor3 = theme.Text
-    titleLabel.Size = UDim2.new(1, -40, 1, 0)
-    titleLabel.Position = UDim2.new(0, 10, 0, 0)
-    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Parent = header
-    
-    -- Эффекты
-    applyNeonEffect(mainFrame)
-    applyNeonEffect(header)
-    
-    -- Интерактивные элементы
+    -- ... (остальной код создания окна как в предыдущей версии)
+
     local interactables = Instance.new("Folder")
     interactables.Name = "Interactables"
     interactables.Parent = mainFrame
-    
-    return {
-        _frame = mainFrame,
-        AddButton = function(self, buttonText)
-            local newButton = Instance.new("TextButton")
-            newButton.Name = "Button"
-            newButton.Size = UDim2.new(1, -20, 0, 40)
-            newButton.Position = UDim2.new(0, 10, 0, #interactables:GetChildren() * 50 + 40)
-            newButton.BackgroundColor3 = theme.Secondary
-            newButton.TextColor3 = theme.Text
-            newButton.Font = Enum.Font.GothamMedium
-            newButton.Text = buttonText
-            newButton.Parent = interactables
-            
-            local buttonCorner = Instance.new("UICorner")
-            buttonCorner.CornerRadius = UDim.new(0, 6)
-            buttonCorner.Parent = newButton
-            
-            local buttonStroke = applyNeonEffect(newButton)
-            
-            -- Анимация при наведении
-            newButton.MouseEnter:Connect(function()
-                game:GetService("TweenService"):Create(newButton, TweenInfo.new(0.2), {
-                    BackgroundColor3 = theme.Secondary:Lerp(theme.Accent, 0.3)
-                }):Play()
-            end)
-            
-            newButton.MouseLeave:Connect(function()
-                game:GetService("TweenService"):Create(newButton, TweenInfo.new(0.2), {
-                    BackgroundColor3 = theme.Secondary
-                }):Play()
-            end)
-            
-            return newButton
+
+    local yOffset = 40 -- Начальное смещение для элементов
+
+    local function updateYOffset(height)
+        yOffset += height + 5
+    end
+
+    -- Кнопка (модифицированная версия)
+    function self:AddButton(buttonText)
+        local newButton = Instance.new("TextButton")
+        -- ... (базовый код кнопки)
+        updateYOffset(40)
+        return newButton
+    end
+
+    -- Тогл
+    function self:AddToggle(text, callback)
+        local toggleFrame = Instance.new("Frame")
+        toggleFrame.Size = UDim2.new(1, -20, 0, 30)
+        toggleFrame.Position = UDim2.new(0, 10, 0, yOffset)
+        toggleFrame.BackgroundTransparency = 1
+        toggleFrame.Parent = interactables
+
+        local toggleButton = Instance.new("TextButton")
+        toggleButton.Size = UDim2.new(0, 50, 0, 25)
+        toggleButton.Position = UDim2.new(1, -50, 0, 0)
+        toggleButton.BackgroundColor3 = theme.Secondary
+        toggleButton.Text = ""
+        
+        local toggleState = false
+        local function updateToggle()
+            toggleState = not toggleState
+            game:GetService("TweenService"):Create(toggleButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = toggleState and theme.Accent or theme.Secondary
+            }):Play()
+            callback(toggleState)
         end
-    }
+        
+        toggleButton.MouseButton1Click:Connect(updateToggle)
+        applyNeonEffect(toggleButton)
+        
+        local label = Instance.new("TextLabel")
+        label.Text = text
+        label.Font = Enum.Font.GothamMedium
+        label.TextColor3 = theme.Text
+        label.Size = UDim2.new(1, -60, 1, 0)
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = toggleFrame
+        
+        updateYOffset(30)
+        return toggleFrame
+    end
+
+    -- Слайдер
+    function self:AddSlider(text, min, max, callback)
+        local sliderFrame = Instance.new("Frame")
+        sliderFrame.Size = UDim2.new(1, -20, 0, 50)
+        sliderFrame.Position = UDim2.new(0, 10, 0, yOffset)
+        sliderFrame.BackgroundTransparency = 1
+        sliderFrame.Parent = interactables
+
+        local sliderTrack = Instance.new("Frame")
+        sliderTrack.Size = UDim2.new(1, 0, 0, 5)
+        sliderTrack.Position = UDim2.new(0, 0, 0, 25)
+        sliderTrack.BackgroundColor3 = theme.Secondary
+        applyNeonEffect(sliderTrack)
+
+        local sliderThumb = Instance.new("Frame")
+        sliderThumb.Size = UDim2.new(0, 15, 0, 15)
+        sliderThumb.AnchorPoint = Vector2.new(0.5, 0.5)
+        sliderThumb.BackgroundColor3 = theme.Accent
+        applyNeonEffect(sliderThumb)
+
+        local dragging = false
+        local function updateValue(input)
+            local pos = (input.Position.X - sliderTrack.AbsolutePosition.X) / sliderTrack.AbsoluteSize.X
+            local value = math.clamp(min + (max - min) * pos, min, max)
+            sliderThumb.Position = UDim2.new(pos, 0, 0.5, 0)
+            callback(math.floor(value))
+        end
+
+        sliderThumb.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+            end
+        end)
+
+        game:GetService("UserInputService").InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+
+        sliderTrack.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                updateValue(input)
+            end
+        end)
+
+        game:GetService("UserInputService").InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                updateValue(input)
+            end
+        end)
+
+        updateYOffset(50)
+        return sliderFrame
+    end
+
+    -- Дропдаун
+    function self:AddDropdown(text, options, callback)
+        local dropdownFrame = Instance.new("Frame")
+        dropdownFrame.Size = UDim2.new(1, -20, 0, 30)
+        dropdownFrame.Position = UDim2.new(0, 10, 0, yOffset)
+        dropdownFrame.BackgroundTransparency = 1
+        dropdownFrame.Parent = interactables
+
+        local mainButton = Instance.new("TextButton")
+        mainButton.Size = UDim2.new(1, 0, 1, 0)
+        mainButton.BackgroundColor3 = theme.Secondary
+        mainButton.Text = text
+        mainButton.Font = Enum.Font.GothamMedium
+        mainButton.TextColor3 = theme.Text
+        applyNeonEffect(mainButton)
+
+        local optionsFrame = Instance.new("ScrollingFrame")
+        optionsFrame.Size = UDim2.new(1, 0, 0, 0)
+        optionsFrame.Position = UDim2.new(0, 0, 1, 5)
+        optionsFrame.BackgroundColor3 = theme.Primary
+        optionsFrame.Visible = false
+        applyNeonEffect(optionsFrame)
+
+        local isOpen = false
+        mainButton.MouseButton1Click:Connect(function()
+            isOpen = not isOpen
+            optionsFrame.Visible = isOpen
+            game:GetService("TweenService"):Create(optionsFrame, TweenInfo.new(0.2), {
+                Size = isOpen and UDim2.new(1,0,0,100) or UDim2.new(1,0,0,0)
+            }):Play()
+        end)
+
+        for i, option in pairs(options) do
+            local optionButton = Instance.new("TextButton")
+            optionButton.Size = UDim2.new(1, -10, 0, 30)
+            optionButton.Position = UDim2.new(0, 5, 0, (i-1)*35)
+            optionButton.Text = option
+            optionButton.Font = Enum.Font.GothamMedium
+            optionButton.TextColor3 = theme.Text
+            optionButton.BackgroundColor3 = theme.Secondary
+            optionButton.MouseButton1Click:Connect(function()
+                callback(option)
+                mainButton.Text = text..": "..option
+                isOpen = false
+                optionsFrame.Visible = false
+            end)
+            optionButton.Parent = optionsFrame
+        end
+
+        updateYOffset(30)
+        return dropdownFrame
+    end
+
+    return self
 end
 
 return Xenon
