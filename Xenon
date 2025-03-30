@@ -1,4 +1,4 @@
--- Xenon UI Library v7.0 (Fully Working Version)
+-- Xenon UI Library v7.0 (Fuly Working Version)
 local Xenon = {}
 Xenon.__index = Xenon
 
