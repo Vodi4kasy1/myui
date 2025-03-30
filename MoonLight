@@ -1,0 +1,377 @@
+local MoonLib = {}
+MoonLib.__index = MoonLib
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+
+function MoonLib.new(config)
+    local self = setmetatable({}, MoonLib)
+    
+    -- Конфигурация по умолчанию
+    self.config = {
+        Title = config.Title or "MoonLib v2.1",
+        ToggleImage = config.ToggleImage or "rbxassetid://99207315574595",
+        Theme = {
+            Primary = config.Theme.Primary or Color3.fromRGB(24, 24, 24),
+            Secondary = config.Theme.Secondary or Color3.fromRGB(40, 40, 40),
+            Accent = config.Theme.Accent or Color3.fromRGB(100, 180, 255),
+            Text = config.Theme.Text or Color3.fromRGB(245, 245, 245),
+            CornerRadius = config.Theme.CornerRadius or UDim.new(0, 8),
+            Stroke = config.Theme.Stroke or Color3.fromRGB(60, 60, 60)
+        },
+        MinSize = config.MinSize or Vector2.new(300, 200),
+        MaxSize = config.MaxSize or Vector2.new(2000, 1500),
+        InitialSize = config.InitialSize or UDim2.new(0, 450, 0, 350)
+    }
+    
+    self.isUIVisible = false
+    self.isResizing = false
+    self.elements = {}
+    
+    self:_initializeUI()
+    return self
+end
+
+function MoonLib:_initializeUI()
+    self.player = Players.LocalPlayer
+    self.gui = Instance.new("ScreenGui")
+    self.gui.Name = self.config.Title
+    self.gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    self.gui.ResetOnSpawn = false
+    self.gui.Parent = self.player:WaitForChild("PlayerGui")
+
+    self:_createMainFrame()
+    self:_createTitleBar()
+    self:_createResizeHandle()
+    self:_createToggleButton()
+    self:_createContentContainer()
+end
+
+function MoonLib:_createMainFrame()
+    self.mainFrame = Instance.new("Frame")
+    self.mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    self.mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    self.mainFrame.Size = UDim2.new(0, 0, 0, 0)
+    self.mainFrame.BackgroundColor3 = self.config.Theme.Primary
+    self.mainFrame.BackgroundTransparency = 1
+    self.mainFrame.Visible = false
+    self.mainFrame.ClipsDescendants = true
+    self.mainFrame.Parent = self.gui
+
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = self.config.Theme.CornerRadius
+    uiCorner.Parent = self.mainFrame
+
+    local uiStroke = Instance.new("UIStroke")
+    uiStroke.Color = self.config.Theme.Stroke
+    uiStroke.Thickness = 2
+    uiStroke.Parent = self.mainFrame
+end
+
+function MoonLib:_createTitleBar()
+    local titleBar = Instance.new("Frame")
+    titleBar.Size = UDim2.new(1, 0, 0, 32)
+    titleBar.BackgroundTransparency = 1
+    titleBar.Parent = self.mainFrame
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Text = self.config.Title
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextSize = 18
+    titleLabel.TextColor3 = self.config.Theme.Accent
+    titleLabel.Size = UDim2.new(1, -40, 1, 0)
+    titleLabel.Position = UDim2.new(0, 12, 0, 0)
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Parent = titleBar
+end
+
+function MoonLib:_createResizeHandle()
+    local resizeHandle = Instance.new("Frame")
+    resizeHandle.Size = UDim2.new(0, 16, 0, 16)
+    resizeHandle.Position = UDim2.new(1, -18, 1, -18)
+    resizeHandle.BackgroundTransparency = 0.8
+    resizeHandle.BackgroundColor3 = self.config.Theme.Accent
+    resizeHandle.Parent = self.mainFrame
+
+    local resizeCorner = Instance.new("UICorner")
+    resizeCorner.CornerRadius = UDim.new(0, 4)
+    resizeCorner.Parent = resizeHandle
+
+    self:_setupResizeLogic(resizeHandle)
+end
+
+function MoonLib:_setupResizeLogic(resizeHandle)
+    local startPos, initialSize
+
+    resizeHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            self.isResizing = true
+            startPos = input.Position
+            initialSize = self.mainFrame.AbsoluteSize
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if self.isResizing and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - startPos
+            local newSize = initialSize + Vector2.new(delta.X, delta.Y)
+            
+            newSize = Vector2.new(
+                math.clamp(newSize.X, self.config.MinSize.X, self.config.MaxSize.X),
+                math.clamp(newSize.Y, self.config.MinSize.Y, self.config.MaxSize.Y)
+            )
+            
+            self.mainFrame.Size = UDim2.new(0, newSize.X, 0, newSize.Y)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            self.isResizing = false
+        end
+    end)
+end
+
+function MoonLib:_createToggleButton()
+    local toggleButton = Instance.new("ImageButton")
+    toggleButton.Image = self.config.ToggleImage
+    toggleButton.Size = UDim2.new(0, 60, 0, 60)
+    toggleButton.Position = UDim2.new(0, 30, 0.5, -30)
+    toggleButton.AnchorPoint = Vector2.new(0, 0.5)
+    toggleButton.BackgroundColor3 = self.config.Theme.Secondary
+    toggleButton.Parent = self.gui
+
+    local toggleUICorner = Instance.new("UICorner")
+    toggleUICorner.CornerRadius = UDim.new(1, 0)
+    toggleUICorner.Parent = toggleButton
+
+    toggleButton.MouseButton1Click:Connect(function()
+        self:toggleUI()
+    end)
+end
+
+function MoonLib:toggleUI()
+    self.isUIVisible = not self.isUIVisible
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad)
+
+    if self.isUIVisible then
+        self.mainFrame.Visible = true
+        TweenService:Create(self.mainFrame, tweenInfo, {
+            Size = self.config.InitialSize,
+            BackgroundTransparency = 0
+        }):Play()
+    else
+        TweenService:Create(self.mainFrame, tweenInfo, {
+            Size = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1
+        }):Play()
+        task.wait(0.3)
+        self.mainFrame.Visible = false
+    end
+end
+
+function MoonLib:_createContentContainer()
+    self.contentContainer = Instance.new("Frame")
+    self.contentContainer.Size = UDim2.new(1, -24, 1, -56)
+    self.contentContainer.Position = UDim2.new(0, 12, 0, 48)
+    self.contentContainer.BackgroundTransparency = 1
+    self.contentContainer.Parent = self.mainFrame
+
+    self.contentLayout = Instance.new("UIListLayout")
+    self.contentLayout.Padding = UDim.new(0, 8)
+    self.contentLayout.Parent = self.contentContainer
+end
+
+-- Публичные методы для добавления элементов
+function MoonLib:AddToggle(text, callback)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, 0, 0, 32)
+    container.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel")
+    label.Text = text
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 14
+    label.TextColor3 = self.config.Theme.Text
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    label.Parent = container
+
+    local toggleFrame = Instance.new("Frame")
+    toggleFrame.Size = UDim2.new(0, 50, 0, 24)
+    toggleFrame.Position = UDim2.new(1, -50, 0.5, -12)
+    toggleFrame.BackgroundColor3 = self.config.Theme.Secondary
+    toggleFrame.Parent = container
+
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(1, 0)
+    toggleCorner.Parent = toggleFrame
+
+    local thumb = Instance.new("Frame")
+    thumb.Size = UDim2.new(0, 20, 0, 20)
+    thumb.Position = UDim2.new(0, 2, 0.5, -10)
+    thumb.BackgroundColor3 = self.config.Theme.Text
+    thumb.Parent = toggleFrame
+
+    local thumbCorner = Instance.new("UICorner")
+    thumbCorner.CornerRadius = UDim.new(1, 0)
+    thumbCorner.Parent = thumb
+
+    local state = false
+    container.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            state = not state
+            local newPos = state and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
+            TweenService:Create(thumb, TweenInfo.new(0.2), {Position = newPos}):Play()
+            TweenService:Create(toggleFrame, TweenInfo.new(0.2), {
+                BackgroundColor3 = state and self.config.Theme.Accent or self.config.Theme.Secondary
+            }):Play()
+            if callback then callback(state) end
+        end
+    end)
+    
+    container.Parent = self.contentContainer
+    return container
+end
+
+function MoonLib:AddSlider(text, min, max, callback)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, 0, 0, 60)
+    container.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel")
+    label.Text = text
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 14
+    label.TextColor3 = self.config.Theme.Text
+    label.Size = UDim2.new(1, 0, 0, 20)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    label.Parent = container
+
+    local track = Instance.new("Frame")
+    track.Size = UDim2.new(1, 0, 0, 4)
+    track.Position = UDim2.new(0, 0, 0, 30)
+    track.BackgroundColor3 = self.config.Theme.Secondary
+    track.Parent = container
+
+    local trackCorner = Instance.new("UICorner")
+    trackCorner.CornerRadius = UDim.new(1, 0)
+    trackCorner.Parent = track
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(0, 0, 1, 0)
+    fill.BackgroundColor3 = self.config.Theme.Accent
+    fill.Parent = track
+
+    local thumb = Instance.new("Frame")
+    thumb.Size = UDim2.new(0, 16, 0, 16)
+    thumb.AnchorPoint = Vector2.new(0.5, 0.5)
+    thumb.Position = UDim2.new(0, 0, 0.5, 0)
+    thumb.BackgroundColor3 = self.config.Theme.Text
+    thumb.Parent = track
+
+    local thumbCorner = Instance.new("UICorner")
+    thumbCorner.CornerRadius = UDim.new(1, 0)
+    thumbCorner.Parent = thumb
+
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Text = tostring(min)
+    valueLabel.Font = Enum.Font.GothamMedium
+    valueLabel.TextSize = 14
+    valueLabel.TextColor3 = self.config.Theme.Text
+    valueLabel.Size = UDim2.new(0, 60, 0, 20)
+    valueLabel.Position = UDim2.new(1, -60, 0, 30)
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Parent = container
+
+    local dragging = false
+    local lastValue = min
+
+    local function updateValue(input)
+        local absoluteX = input.Position.X
+        local trackStart = track.AbsolutePosition.X
+        local trackEnd = trackStart + track.AbsoluteSize.X
+        local ratio = math.clamp((absoluteX - trackStart) / (trackEnd - trackStart), 0, 1)
+        local value = math.floor(min + (max - min) * ratio)
+
+        if value ~= lastValue then
+            lastValue = value
+            fill.Size = UDim2.new(ratio, 0, 1, 0)
+            thumb.Position = UDim2.new(ratio, 0, 0.5, 0)
+            valueLabel.Text = tostring(value)
+            if callback then callback(value) end
+        end
+    end
+
+    track.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            updateValue(input)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateValue(input)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    container.Parent = self.contentContainer
+    return container
+end
+
+function MoonLib:AddButton(text, callback)
+    local button = Instance.new("TextButton")
+    button.Text = text
+    button.Font = Enum.Font.GothamMedium
+    button.TextSize = 14
+    button.TextColor3 = self.config.Theme.Text
+    button.Size = UDim2.new(1, 0, 0, 32)
+    button.BackgroundColor3 = self.config.Theme.Secondary
+    button.AutoButtonColor = false
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = button
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = self.config.Theme.Stroke
+    stroke.Thickness = 1
+    stroke.Parent = button
+
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.15), {
+            BackgroundColor3 = self.config.Theme.Accent,
+            TextColor3 = Color3.new(1,1,1)
+        }):Play()
+    end)
+
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundColor3 = self.config.Theme.Secondary,
+            TextColor3 = self.config.Theme.Text
+        }):Play()
+    end)
+
+    button.MouseButton1Click:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.1), {Size = UDim2.new(0.98, 0, 0, 30)}):Play()
+        TweenService:Create(button, TweenInfo.new(0.1), {Size = UDim2.new(1, 0, 0, 32)}):Play()
+        if callback then callback() end
+    end)
+    
+    button.Parent = self.contentContainer
+    return button
+end
+
+return MoonLib
