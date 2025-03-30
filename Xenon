@@ -1,72 +1,68 @@
--- Xenon UI Library v6.1 - Полностью рабочая версия
+-- Xenon UI Library v7.0 (Fully Working Version)
 local Xenon = {}
 Xenon.__index = Xenon
 
--- Сервисы
+-- Services
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 
--- Создание экземпляров
-local function Create(class, props)
-    local instance = Instance.new(class)
-    for prop, value in pairs(props) do
-        instance[prop] = value
-    end
-    if props.Parent then
-        instance.Parent = props.Parent
+-- Helper function to create instances
+local function CreateInstance(className, properties)
+    local instance = Instance.new(className)
+    for property, value in pairs(properties) do
+        instance[property] = value
     end
     return instance
 end
 
--- Конструктор
+-- Main constructor
 function Xenon.new(config)
     config = config or {}
     
     local self = setmetatable({
-        AccentColor = config.color or Color3.fromRGB(0, 170, 255),
-        DarkColor = Color3.fromRGB(20, 20, 25),
-        LightColor = Color3.fromRGB(240, 240, 240),
-        WindowSize = config.size or UDim2.new(0, 600, 0, 400),
-        WindowPosition = config.position or UDim2.new(0.5, -300, 0.5, -200),
+        AccentColor = config.AccentColor or Color3.fromRGB(0, 170, 255),
+        DarkColor = config.DarkColor or Color3.fromRGB(20, 20, 25),
+        LightColor = config.LightColor or Color3.fromRGB(240, 240, 240),
+        WindowSize = config.WindowSize or UDim2.new(0, 600, 0, 400),
+        WindowPosition = config.WindowPosition or UDim2.new(0.5, -300, 0.5, -200),
         Tabs = {},
         CurrentTab = nil,
         Elements = {},
         Opened = false
     }, Xenon)
     
-    self:SetupMainWindow()
-    return self
-end
-
--- Основное окно
-function Xenon:SetupMainWindow()
-    self.ScreenGui = Create("ScreenGui", {
+    -- Create main UI components
+    self.ScreenGui = CreateInstance("ScreenGui", {
         Name = "XenonUI",
         ResetOnSpawn = false,
         Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
     })
     
-    self.MainFrame = Create("Frame", {
+    self.MainFrame = CreateInstance("Frame", {
         Name = "MainWindow",
         Size = UDim2.new(0, 0, 0, 0),
         Position = self.WindowPosition,
         BackgroundColor3 = self.DarkColor,
-        BackgroundTransparency = 0.1,
-        ClipsDescendants = true,
+        BackgroundTransparency = 0.05,
         Parent = self.ScreenGui
     })
     
-    Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = self.MainFrame})
-
-    -- Верхняя панель
-    self.TopBar = Create("Frame", {
+    CreateInstance("UICorner", {
+        CornerRadius = UDim.new(0, 8),
+        Parent = self.MainFrame
+    })
+    
+    -- Top bar
+    self.TopBar = CreateInstance("Frame", {
+        Name = "TopBar",
         Size = UDim2.new(1, 0, 0, 30),
         BackgroundColor3 = Color3.fromRGB(15, 15, 20),
         Parent = self.MainFrame
     })
-
-    self.Title = Create("TextLabel", {
+    
+    self.Title = CreateInstance("TextLabel", {
+        Name = "Title",
         Text = "XENON UI",
         Font = Enum.Font.GothamBold,
         TextSize = 14,
@@ -76,8 +72,9 @@ function Xenon:SetupMainWindow()
         BackgroundTransparency = 1,
         Parent = self.TopBar
     })
-
-    self.CloseButton = Create("TextButton", {
+    
+    self.CloseButton = CreateInstance("TextButton", {
+        Name = "CloseButton",
         Text = "×",
         Font = Enum.Font.GothamBold,
         TextSize = 18,
@@ -87,34 +84,39 @@ function Xenon:SetupMainWindow()
         BackgroundTransparency = 1,
         Parent = self.TopBar
     })
-
-    -- Панель вкладок
-    self.TabButtonsFrame = Create("Frame", {
+    
+    -- Tab buttons
+    self.TabButtonsFrame = CreateInstance("Frame", {
+        Name = "TabButtons",
         Size = UDim2.new(1, 0, 0, 40),
         Position = UDim2.new(0, 0, 0, 30),
         BackgroundTransparency = 1,
         Parent = self.MainFrame
     })
-
-    -- Контейнер вкладок
-    self.TabsContainer = Create("Frame", {
+    
+    -- Tabs container
+    self.TabsContainer = CreateInstance("Frame", {
+        Name = "TabsContainer",
         Size = UDim2.new(1, 0, 1, -70),
         Position = UDim2.new(0, 0, 0, 70),
         BackgroundTransparency = 1,
         Parent = self.MainFrame
     })
-
-    -- Закрытие окна
+    
+    -- Close functionality
     self.CloseButton.MouseButton1Click:Connect(function()
         self:Close()
     end)
+    
+    return self
 end
 
--- Создание вкладки
+-- Tab methods
 function Xenon:NewTab(name)
     local tab = {
         Name = name,
-        Button = Create("TextButton", {
+        Button = CreateInstance("TextButton", {
+            Name = name.."TabButton",
             Text = name,
             Font = Enum.Font.Gotham,
             TextSize = 13,
@@ -124,7 +126,8 @@ function Xenon:NewTab(name)
             BackgroundTransparency = 1,
             Parent = self.TabButtonsFrame
         }),
-        Frame = Create("Frame", {
+        Frame = CreateInstance("Frame", {
+            Name = name.."Tab",
             Size = UDim2.new(1, 0, 1, 0),
             BackgroundTransparency = 1,
             Visible = false,
@@ -146,7 +149,6 @@ function Xenon:NewTab(name)
     return tab
 end
 
--- Переключение вкладок
 function Xenon:SwitchTab(tab)
     for _, t in ipairs(self.Tabs) do
         t.Frame.Visible = false
@@ -155,10 +157,12 @@ function Xenon:SwitchTab(tab)
     self.CurrentTab = tab
 end
 
--- Создание секции
+-- Section methods
 function Xenon:NewSection(tab, name)
     local section = {
-        Content = Create("Frame", {
+        Name = name,
+        Content = CreateInstance("Frame", {
+            Name = name.."Section",
             Size = UDim2.new(0.3, -10, 1, -10),
             Position = UDim2.new(0, 5 + (#tab.Sections * 200), 0, 5),
             BackgroundColor3 = Color3.fromRGB(30, 30, 35),
@@ -166,9 +170,12 @@ function Xenon:NewSection(tab, name)
         })
     }
     
-    Create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = section.Content})
+    CreateInstance("UICorner", {
+        CornerRadius = UDim.new(0, 6),
+        Parent = section.Content
+    })
     
-    section.Title = Create("TextLabel", {
+    section.Title = CreateInstance("TextLabel", {
         Text = name,
         Font = Enum.Font.GothamBold,
         TextSize = 14,
@@ -179,7 +186,7 @@ function Xenon:NewSection(tab, name)
         Parent = section.Content
     })
     
-    section.ContentFrame = Create("Frame", {
+    section.ContentFrame = CreateInstance("Frame", {
         Size = UDim2.new(1, -10, 1, -40),
         Position = UDim2.new(0, 5, 0, 35),
         BackgroundTransparency = 1,
@@ -190,10 +197,12 @@ function Xenon:NewSection(tab, name)
     return section
 end
 
--- Элементы UI
+-- UI Elements
 function Xenon:NewButton(section, config)
-    local button = Create("TextButton", {
-        Text = config.text or "Button",
+    config = config or {}
+    
+    local button = CreateInstance("TextButton", {
+        Text = config.Text or "Button",
         Font = Enum.Font.Gotham,
         TextSize = 13,
         TextColor3 = self.LightColor,
@@ -203,8 +212,12 @@ function Xenon:NewButton(section, config)
         Parent = section.ContentFrame
     })
     
-    Create("UICorner", {CornerRadius = UDim.new(0, 4), Parent = button})
+    CreateInstance("UICorner", {
+        CornerRadius = UDim.new(0, 4),
+        Parent = button
+    })
     
+    -- Hover effects
     button.MouseEnter:Connect(function()
         TweenService:Create(button, TweenInfo.new(0.1), {
             BackgroundColor3 = Color3.fromRGB(50, 50, 55)
@@ -217,6 +230,7 @@ function Xenon:NewButton(section, config)
         }):Play()
     end)
     
+    -- Click effects
     button.MouseButton1Click:Connect(function()
         TweenService:Create(button, TweenInfo.new(0.1), {
             BackgroundColor3 = self.AccentColor
@@ -225,14 +239,17 @@ function Xenon:NewButton(section, config)
         TweenService:Create(button, TweenInfo.new(0.1), {
             BackgroundColor3 = Color3.fromRGB(40, 40, 45)
         }):Play()
-        if config.callback then config.callback() end
+        if config.Callback then config.Callback() end
     end)
     
     return button
 end
 
--- Управление окном
+-- Window management
 function Xenon:Open()
+    if self.Opened then return end
+    self.Opened = true
+    
     self.MainFrame.Visible = true
     TweenService:Create(self.MainFrame, TweenInfo.new(0.5), {
         Size = self.WindowSize
@@ -240,9 +257,20 @@ function Xenon:Open()
 end
 
 function Xenon:Close()
+    if not self.Opened then return end
+    self.Opened = false
+    
     TweenService:Create(self.MainFrame, TweenInfo.new(0.3), {
         Size = UDim2.new(0, 0, 0, 0)
     }):Play()
+end
+
+function Xenon:Toggle()
+    if self.Opened then
+        self:Close()
+    else
+        self:Open()
+    end
 end
 
 return Xenon
