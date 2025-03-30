@@ -1,4 +1,4 @@
--- Xenon UI Library v7.0 (Fuly Working Version)
+-- Xenon UI Library v8.0 - Full Featured UI Library with Themes, Resizing and Mobile Support
 local Xenon = {}
 Xenon.__index = Xenon
 
@@ -6,139 +6,290 @@ Xenon.__index = Xenon
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
--- Helper function to create instances
-local function CreateInstance(className, properties)
-    local instance = Instance.new(className)
-    for property, value in pairs(properties) do
-        instance[property] = value
+-- Themes
+local Themes = {
+    Default = {
+        Accent = Color3.fromRGB(0, 170, 255),
+        Dark = Color3.fromRGB(20, 20, 25),
+        Light = Color3.fromRGB(240, 240, 240),
+        Background = Color3.fromRGB(30, 30, 35),
+        Text = Color3.fromRGB(240, 240, 240)
+    },
+    Dark = {
+        Accent = Color3.fromRGB(0, 255, 150),
+        Dark = Color3.fromRGB(15, 15, 20),
+        Light = Color3.fromRGB(220, 220, 220),
+        Background = Color3.fromRGB(25, 25, 30),
+        Text = Color3.fromRGB(220, 220, 220)
+    },
+    Light = {
+        Accent = Color3.fromRGB(0, 120, 215),
+        Dark = Color3.fromRGB(240, 240, 240),
+        Light = Color3.fromRGB(20, 20, 25),
+        Background = Color3.fromRGB(230, 230, 235),
+        Text = Color3.fromRGB(20, 20, 25)
+    },
+    Ocean = {
+        Accent = Color3.fromRGB(0, 255, 255),
+        Dark = Color3.fromRGB(5, 15, 30),
+        Light = Color3.fromRGB(200, 240, 255),
+        Background = Color3.fromRGB(10, 25, 45),
+        Text = Color3.fromRGB(200, 240, 255)
+    },
+    Cyber = {
+        Accent = Color3.fromRGB(255, 0, 100),
+        Dark = Color3.fromRGB(10, 5, 20),
+        Light = Color3.fromRGB(200, 220, 255),
+        Background = Color3.fromRGB(20, 15, 30),
+        Text = Color3.fromRGB(200, 220, 255)
+    }
+}
+
+-- Utility Functions
+local function Create(class, props)
+    local instance = Instance.new(class)
+    for prop, value in pairs(props) do
+        instance[prop] = value
+    end
+    if props.Parent then
+        instance.Parent = props.Parent
     end
     return instance
 end
 
--- Main constructor
+local function IsMobile()
+    return UserInputService.TouchEnabled and not UserInputService.MouseEnabled
+end
+
+-- Main Constructor
 function Xenon.new(config)
     config = config or {}
     
     local self = setmetatable({
-        AccentColor = config.AccentColor or Color3.fromRGB(0, 170, 255),
-        DarkColor = config.DarkColor or Color3.fromRGB(20, 20, 25),
-        LightColor = config.LightColor or Color3.fromRGB(240, 240, 240),
-        WindowSize = config.WindowSize or UDim2.new(0, 600, 0, 400),
-        WindowPosition = config.WindowPosition or UDim2.new(0.5, -300, 0.5, -200),
+        CurrentTheme = config.Theme or "Default",
+        Themes = Themes,
+        WindowSize = config.Size or UDim2.new(0, 600, 0, 400),
+        WindowPosition = config.Position or UDim2.new(0.5, -300, 0.5, -200),
+        MinSize = UDim2.new(0, 400, 0, 300),
+        MaxSize = UDim2.new(0, 800, 0, 600),
         Tabs = {},
         CurrentTab = nil,
         Elements = {},
-        Opened = false
+        Opened = false,
+        Mobile = IsMobile(),
+        Dragging = false,
+        Resizing = false,
+        DragStart = Vector2.new(0, 0),
+        StartPos = UDim2.new(0, 0, 0, 0),
+        StartSize = UDim2.new(0, 0, 0, 0)
     }, Xenon)
     
-    -- Create main UI components
-    self.ScreenGui = CreateInstance("ScreenGui", {
+    self:SetupMainWindow()
+    self:ApplyTheme(self.CurrentTheme)
+    
+    return self
+end
+
+-- Main Window Setup
+function Xenon:SetupMainWindow()
+    -- ScreenGui
+    self.ScreenGui = Create("ScreenGui", {
         Name = "XenonUI",
         ResetOnSpawn = false,
         Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
     })
     
-    self.MainFrame = CreateInstance("Frame", {
+    -- Main Window Frame
+    self.MainFrame = Create("Frame", {
         Name = "MainWindow",
         Size = UDim2.new(0, 0, 0, 0),
         Position = self.WindowPosition,
-        BackgroundColor3 = self.DarkColor,
+        BackgroundColor3 = self.Themes[self.CurrentTheme].Dark,
         BackgroundTransparency = 0.05,
+        ClipsDescendants = true,
         Parent = self.ScreenGui
     })
     
-    CreateInstance("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = self.MainFrame
-    })
+    Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = self.MainFrame})
     
-    -- Top bar
-    self.TopBar = CreateInstance("Frame", {
+    -- Top Bar
+    self.TopBar = Create("Frame", {
         Name = "TopBar",
-        Size = UDim2.new(1, 0, 0, 30),
+        Size = UDim2.new(1, 0, 0, self.Mobile and 40 or 30),
         BackgroundColor3 = Color3.fromRGB(15, 15, 20),
         Parent = self.MainFrame
     })
     
-    self.Title = CreateInstance("TextLabel", {
+    -- Title
+    self.Title = Create("TextLabel", {
         Name = "Title",
         Text = "XENON UI",
         Font = Enum.Font.GothamBold,
-        TextSize = 14,
-        TextColor3 = self.LightColor,
+        TextSize = self.Mobile and 16 or 14,
+        TextColor3 = self.Themes[self.CurrentTheme].Light,
         Size = UDim2.new(0, 200, 1, 0),
         Position = UDim2.new(0, 15, 0, 0),
         BackgroundTransparency = 1,
         Parent = self.TopBar
     })
     
-    self.CloseButton = CreateInstance("TextButton", {
+    -- Close Button
+    self.CloseButton = Create("TextButton", {
         Name = "CloseButton",
         Text = "×",
         Font = Enum.Font.GothamBold,
-        TextSize = 18,
-        TextColor3 = self.LightColor,
-        Size = UDim2.new(0, 30, 1, 0),
-        Position = UDim2.new(1, -30, 0, 0),
+        TextSize = self.Mobile and 22 or 18,
+        TextColor3 = self.Themes[self.CurrentTheme].Light,
+        Size = UDim2.new(0, self.Mobile and 40 or 30, 1, 0),
+        Position = UDim2.new(1, self.Mobile and -40 or -30, 0, 0),
         BackgroundTransparency = 1,
         Parent = self.TopBar
     })
     
-    -- Tab buttons
-    self.TabButtonsFrame = CreateInstance("Frame", {
+    -- Tab Buttons
+    self.TabButtonsFrame = Create("Frame", {
         Name = "TabButtons",
-        Size = UDim2.new(1, 0, 0, 40),
-        Position = UDim2.new(0, 0, 0, 30),
+        Size = UDim2.new(1, 0, 0, self.Mobile and 50 or 40),
+        Position = UDim2.new(0, 0, 0, self.Mobile and 40 or 30),
         BackgroundTransparency = 1,
         Parent = self.MainFrame
     })
     
-    -- Tabs container
-    self.TabsContainer = CreateInstance("Frame", {
+    -- Tabs Container with Scrolling
+    self.TabsContainer = Create("ScrollingFrame", {
         Name = "TabsContainer",
-        Size = UDim2.new(1, 0, 1, -70),
-        Position = UDim2.new(0, 0, 0, 70),
+        Size = UDim2.new(1, 0, 1, -(self.Mobile and 90 or 70)),
+        Position = UDim2.new(0, 0, 0, self.Mobile and 90 or 70),
         BackgroundTransparency = 1,
+        ScrollBarThickness = 5,
+        VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
         Parent = self.MainFrame
     })
+    
+    -- Resize Handle
+    self.ResizeHandle = Create("Frame", {
+        Name = "ResizeHandle",
+        Size = UDim2.new(0, 20, 0, 20),
+        Position = UDim2.new(1, -20, 1, -20),
+        BackgroundColor3 = Color3.fromRGB(100, 100, 100),
+        BackgroundTransparency = 0.7,
+        Parent = self.MainFrame
+    })
+    
+    Create("UICorner", {CornerRadius = UDim.new(0, 4), Parent = self.ResizeHandle})
     
     -- Close functionality
     self.CloseButton.MouseButton1Click:Connect(function()
         self:Close()
     end)
     
-    return self
+    -- Dragging functionality
+    self.TopBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            self.Dragging = true
+            self.DragStart = input.Position
+            self.StartPos = self.MainFrame.Position
+        end
+    end)
+    
+    -- Resizing functionality
+    self.ResizeHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            self.Resizing = true
+            self.DragStart = input.Position
+            self.StartSize = self.MainFrame.Size
+        end
+    end)
+    
+    -- Input ended handlers
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            self.Dragging = false
+            self.Resizing = false
+        end
+    end)
+    
+    -- Input changed handler
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            if self.Dragging then
+                local delta = input.Position - self.DragStart
+                local newPos = UDim2.new(
+                    self.StartPos.X.Scale, 
+                    self.StartPos.X.Offset + delta.X, 
+                    self.StartPos.Y.Scale, 
+                    self.StartPos.Y.Offset + delta.Y
+                )
+                self.MainFrame.Position = newPos
+            elseif self.Resizing then
+                local delta = input.Position - self.DragStart
+                local newSize = UDim2.new(
+                    self.StartSize.X.Scale, 
+                    math.clamp(
+                        self.StartSize.X.Offset + delta.X, 
+                        self.MinSize.X.Offset, 
+                        self.MaxSize.X.Offset
+                    ),
+                    self.StartSize.Y.Scale, 
+                    math.clamp(
+                        self.StartSize.Y.Offset + delta.Y, 
+                        self.MinSize.Y.Offset, 
+                        self.MaxSize.Y.Offset
+                    )
+                )
+                self.MainFrame.Size = newSize
+                self.WindowSize = newSize
+            end
+        end
+    end)
 end
 
--- Tab methods
+-- Tab System
 function Xenon:NewTab(name)
     local tab = {
         Name = name,
-        Button = CreateInstance("TextButton", {
+        Button = Create("TextButton", {
             Name = name.."TabButton",
             Text = name,
             Font = Enum.Font.Gotham,
-            TextSize = 13,
-            TextColor3 = self.LightColor,
-            Size = UDim2.new(0, 100, 1, 0),
-            Position = UDim2.new(0, #self.Tabs * 100, 0, 0),
+            TextSize = self.Mobile and 14 or 13,
+            TextColor3 = self.Themes[self.CurrentTheme].Light,
+            Size = UDim2.new(0, self.Mobile and 120 or 100, 1, 0),
+            Position = UDim2.new(0, #self.Tabs * (self.Mobile and 120 or 100), 0, 0),
             BackgroundTransparency = 1,
             Parent = self.TabButtonsFrame
         }),
-        Frame = CreateInstance("Frame", {
+        Frame = Create("ScrollingFrame", {
             Name = name.."Tab",
             Size = UDim2.new(1, 0, 1, 0),
             BackgroundTransparency = 1,
             Visible = false,
+            ScrollBarThickness = 5,
+            VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
             Parent = self.TabsContainer
         }),
-        Sections = {}
+        Sections = {},
+        ContentLayout = Create("UIListLayout", {
+            Padding = UDim.new(0, 5),
+            FillDirection = Enum.FillDirection.Horizontal,
+            Parent = nil -- Will be set after frame creation
+        })
     }
     
-    tab.Button.MouseButton1Click:Connect(function()
+    tab.ContentLayout.Parent = tab.Frame
+    
+    -- Handle both mouse and touch input
+    local function handleInput()
         self:SwitchTab(tab)
-    end)
+    end
+    
+    if self.Mobile then
+        tab.Button.TouchTap:Connect(handleInput)
+    else
+        tab.Button.MouseButton1Click:Connect(handleInput)
+    end
     
     table.insert(self.Tabs, tab)
     
@@ -157,40 +308,42 @@ function Xenon:SwitchTab(tab)
     self.CurrentTab = tab
 end
 
--- Section methods
+-- Section System
 function Xenon:NewSection(tab, name)
     local section = {
         Name = name,
-        Content = CreateInstance("Frame", {
+        Content = Create("Frame", {
             Name = name.."Section",
-            Size = UDim2.new(0.3, -10, 1, -10),
-            Position = UDim2.new(0, 5 + (#tab.Sections * 200), 0, 5),
-            BackgroundColor3 = Color3.fromRGB(30, 30, 35),
+            Size = UDim2.new(0, self.Mobile and 180 or 160, 1, -10),
+            BackgroundColor3 = self.Themes[self.CurrentTheme].Background,
             Parent = tab.Frame
         })
     }
     
-    CreateInstance("UICorner", {
-        CornerRadius = UDim.new(0, 6),
-        Parent = section.Content
-    })
+    Create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = section.Content})
     
-    section.Title = CreateInstance("TextLabel", {
+    section.Title = Create("TextLabel", {
         Text = name,
         Font = Enum.Font.GothamBold,
-        TextSize = 14,
-        TextColor3 = self.LightColor,
-        Size = UDim2.new(1, -10, 0, 30),
+        TextSize = self.Mobile and 14 or 13,
+        TextColor3 = self.Themes[self.CurrentTheme].Text,
+        Size = UDim2.new(1, -10, 0, self.Mobile and 35 or 30),
         Position = UDim2.new(0, 5, 0, 0),
         BackgroundTransparency = 1,
         Parent = section.Content
     })
     
-    section.ContentFrame = CreateInstance("Frame", {
-        Size = UDim2.new(1, -10, 1, -40),
-        Position = UDim2.new(0, 5, 0, 35),
+    section.ContentFrame = Create("ScrollingFrame", {
+        Size = UDim2.new(1, -10, 1, -(self.Mobile and 45 or 40)),
+        Position = UDim2.new(0, 5, 0, self.Mobile and 40 or 35),
         BackgroundTransparency = 1,
+        ScrollBarThickness = 3,
         Parent = section.Content
+    })
+    
+    Create("UIListLayout", {
+        Padding = UDim.new(0, 5),
+        Parent = section.ContentFrame
     })
     
     table.insert(tab.Sections, section)
@@ -201,76 +354,250 @@ end
 function Xenon:NewButton(section, config)
     config = config or {}
     
-    local button = CreateInstance("TextButton", {
+    local button = Create("TextButton", {
         Text = config.Text or "Button",
         Font = Enum.Font.Gotham,
-        TextSize = 13,
-        TextColor3 = self.LightColor,
-        Size = UDim2.new(1, 0, 0, 30),
+        TextSize = self.Mobile and 14 or 13,
+        TextColor3 = self.Themes[self.CurrentTheme].Text,
+        Size = UDim2.new(1, 0, 0, self.Mobile and 35 or 30),
         BackgroundColor3 = Color3.fromRGB(40, 40, 45),
         AutoButtonColor = false,
         Parent = section.ContentFrame
     })
     
-    CreateInstance("UICorner", {
-        CornerRadius = UDim.new(0, 4),
-        Parent = button
-    })
+    Create("UICorner", {CornerRadius = UDim.new(0, 4), Parent = button})
     
     -- Hover effects
     button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.1), {
-            BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-        }):Play()
+        if not self.Mobile then
+            TweenService:Create(button, TweenInfo.new(0.1), {
+                BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+            }):Play()
+        end
     end)
     
     button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.1), {
-            BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-        }):Play()
+        if not self.Mobile then
+            TweenService:Create(button, TweenInfo.new(0.1), {
+                BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+            }):Play()
+        end
     end)
     
     -- Click effects
-    button.MouseButton1Click:Connect(function()
+    local function handleClick()
         TweenService:Create(button, TweenInfo.new(0.1), {
-            BackgroundColor3 = self.AccentColor
+            BackgroundColor3 = self.Themes[self.CurrentTheme].Accent
         }):Play()
         task.wait(0.1)
         TweenService:Create(button, TweenInfo.new(0.1), {
             BackgroundColor3 = Color3.fromRGB(40, 40, 45)
         }):Play()
         if config.Callback then config.Callback() end
-    end)
+    end
+    
+    if self.Mobile then
+        button.TouchTap:Connect(handleClick)
+    else
+        button.MouseButton1Click:Connect(handleClick)
+    end
     
     return button
 end
 
--- Window management
-function Xenon:Open()
-    if self.Opened then return end
-    self.Opened = true
+function Xenon:NewToggle(section, config)
+    config = config or {}
     
-    self.MainFrame.Visible = true
-    TweenService:Create(self.MainFrame, TweenInfo.new(0.5), {
-        Size = self.WindowSize
-    }):Play()
-end
-
-function Xenon:Close()
-    if not self.Opened then return end
-    self.Opened = false
+    local toggle = {
+        Value = config.Default or false
+    }
     
-    TweenService:Create(self.MainFrame, TweenInfo.new(0.3), {
-        Size = UDim2.new(0, 0, 0, 0)
-    }):Play()
-end
-
-function Xenon:Toggle()
-    if self.Opened then
-        self:Close()
-    else
-        self:Open()
+    local frame = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, self.Mobile and 35 or 30),
+        BackgroundTransparency = 1,
+        Parent = section.ContentFrame
+    })
+    
+    local label = Create("TextLabel", {
+        Text = config.Text or "Toggle",
+        Font = Enum.Font.Gotham,
+        TextSize = self.Mobile and 14 or 13,
+        TextColor3 = self.Themes[self.CurrentTheme].Text,
+        Size = UDim2.new(0.7, 0, 1, 0),
+        TextXAlignment = Enum.TextXAlignment.Left,
+        BackgroundTransparency = 1,
+        Parent = frame
+    })
+    
+    local toggleButton = Create("TextButton", {
+        Text = "",
+        Size = UDim2.new(0, self.Mobile and 50 or 40, 0, self.Mobile and 25 or 20),
+        Position = UDim2.new(1, self.Mobile and -50 or -40, 0.5, self.Mobile and -12 or -10),
+        BackgroundColor3 = Color3.fromRGB(60, 60, 65),
+        AutoButtonColor = false,
+        Parent = frame
+    })
+    
+    Create("UICorner", {CornerRadius = UDim.new(0, 10), Parent = toggleButton})
+    
+    local dot = Create("Frame", {
+        Size = UDim2.new(0, self.Mobile and 21 or 16, 0, self.Mobile and 21 or 16),
+        Position = UDim2.new(0, 2, 0.5, self.Mobile and -10 or -8),
+        BackgroundColor3 = Color3.fromRGB(120, 120, 120),
+        Parent = toggleButton
+    })
+    
+    Create("UICorner", {CornerRadius = UDim.new(0.5, 0), Parent = dot})
+    
+    local function update()
+        if toggle.Value then
+            TweenService:Create(dot, TweenInfo.new(0.2), {
+                Position = UDim2.new(1, self.Mobile and -23 or -18, 0.5, self.Mobile and -10 or -8),
+                BackgroundColor3 = self.Themes[self.CurrentTheme].Accent
+            }):Play()
+            TweenService:Create(toggleButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = Color3.fromRGB(
+                    self.Themes[self.CurrentTheme].Accent.R * 0.2,
+                    self.Themes[self.CurrentTheme].Accent.G * 0.2,
+                    self.Themes[self.CurrentTheme].Accent.B * 0.2
+                )
+            }):Play()
+        else
+            TweenService:Create(dot, TweenInfo.new(0.2), {
+                Position = UDim2.new(0, 2, 0.5, self.Mobile and -10 or -8),
+                BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+            }):Play()
+            TweenService:Create(toggleButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = Color3.fromRGB(60, 60, 65)
+            }):Play()
+        end
     end
+    
+    local function handleInput()
+        toggle.Value = not toggle.Value
+        update()
+        if config.Callback then config.Callback(toggle.Value) end
+    end
+    
+    if self.Mobile then
+        toggleButton.TouchTap:Connect(handleInput)
+    else
+        toggleButton.MouseButton1Click:Connect(handleInput)
+    end
+    
+    update()
+    
+    function toggle:Set(value)
+        toggle.Value = value
+        update()
+    end
+    
+    return toggle
 end
 
-return Xenon
+function Xenon:NewSlider(section, config)
+    config = config or {}
+    
+    local slider = {
+        Value = config.Default or config.Min or 0
+    }
+    
+    local frame = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, self.Mobile and 60 or 50),
+        BackgroundTransparency = 1,
+        Parent = section.ContentFrame
+    })
+    
+    local label = Create("TextLabel", {
+        Text = config.Text or "Slider",
+        Font = Enum.Font.Gotham,
+        TextSize = self.Mobile and 14 or 13,
+        TextColor3 = self.Themes[self.CurrentTheme].Text,
+        Size = UDim2.new(1, -60, 0, 20),
+        TextXAlignment = Enum.TextXAlignment.Left,
+        BackgroundTransparency = 1,
+        Parent = frame
+    })
+    
+    local valueLabel = Create("TextLabel", {
+        Text = tostring(slider.Value),
+        Font = Enum.Font.Gotham,
+        TextSize = self.Mobile and 13 or 12,
+        TextColor3 = self.Themes[self.CurrentTheme].Text,
+        Size = UDim2.new(0, 50, 0, 20),
+        Position = UDim2.new(1, -50, 0, 0),
+        TextXAlignment = Enum.TextXAlignment.Right,
+        BackgroundTransparency = 1,
+        Parent = frame
+    })
+    
+    local bar = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, self.Mobile and 8 or 4),
+        Position = UDim2.new(0, 0, 0, self.Mobile and 35 or 30),
+        BackgroundColor3 = Color3.fromRGB(50, 50, 55),
+        Parent = frame
+    })
+    
+    Create("UICorner", {CornerRadius = UDim.new(0, 2), Parent = bar})
+    
+    local fill = Create("Frame", {
+        Size = UDim2.new(0, 0, 1, 0),
+        BackgroundColor3 = self.Themes[self.CurrentTheme].Accent,
+        Parent = bar
+    })
+    
+    Create("UICorner", {CornerRadius = UDim.new(0, 2), Parent = fill})
+    
+    local button = Create("TextButton", {
+        Text = "",
+        Size = UDim2.new(0, self.Mobile and 24 or 16, 0, self.Mobile and 24 or 16),
+        Position = UDim2.new(0, -self.Mobile and 12 or 8, 0.5, -self.Mobile and 12 or 8),
+        BackgroundColor3 = self.Themes[self.CurrentTheme].Light,
+        AutoButtonColor = false,
+        Parent = bar
+    })
+    
+    Create("UICorner", {CornerRadius = UDim.new(0.5, 0), Parent = button})
+    
+    local dragging = false
+    
+    local function update(input)
+        local pos
+        if input then
+            pos = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+        else
+            pos = (slider.Value - (config.Min or 0)) / ((config.Max or 100) - (config.Min or 0))
+        end
+        
+        slider.Value = math.floor((config.Min or 0) + ((config.Max or 100) - (config.Min or 0)) * pos)
+        valueLabel.Text = tostring(slider.Value)
+        fill.Size = UDim2.new(pos, 0, 1, 0)
+        button.Position = UDim2.new(pos, -self.Mobile and 12 or 8, 0.5, -self.Mobile and 12 or 8)
+        
+        if config.Callback then config.Callback(slider.Value) end
+    end
+    
+    -- Input handling for both mobile and desktop
+    local function handleInputBegan(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            if input.UserInputType == Enum.UserInputType.Touch then
+                update(input)
+            end
+        end
+    end
+    
+    local function handleInputChanged(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input)
+        end
+    end
+    
+    button.InputBegan:Connect(handleInputBegan)
+    bar.InputBegan:Connect(handleInputBegan)
+    
+    UserInputService.InputChanged:Connect(handleInputChanged)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+         
