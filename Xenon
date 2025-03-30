@@ -1,9 +1,4 @@
---[[
-  Xenon UI Library v5.0
-  Полностью самостоятельная библиотека с поддержкой:
-  - ПК, телефонов, планшетов, ноутбуков
-]]
-
+-- Xenon UI Library v5.1 (Fixed)
 local Xenon = {}
 Xenon.__index = Xenon
 
@@ -12,194 +7,72 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
-local GuiService = game:GetService("GuiService")
 
 -- Утилиты
 local function Create(class, props)
     local instance = Instance.new(class)
     for prop, value in pairs(props) do
-        if prop ~= "Parent" then
-            instance[prop] = value
-        end
+        instance[prop] = value
     end
-    instance.Parent = props.Parent
+    if props.Parent then
+        instance.Parent = props.Parent
+    end
     return instance
 end
-
--- Определение платформы
-local function IsMobile()
-    return UserInputService.TouchEnabled and not UserInputService.MouseEnabled
-end
-
-local function IsTablet()
-    if not IsMobile() then return false end
-    local viewportSize = workspace.CurrentCamera.ViewportSize
-    return math.min(viewportSize.X, viewportSize.Y) > 700
-end
-
--- Темы (10 крутых тем)
-local Themes = {
-    Default = {
-        Accent = Color3.fromRGB(0, 170, 255),
-        Dark = Color3.fromRGB(20, 20, 25),
-        Light = Color3.fromRGB(240, 240, 240),
-        Background = Color3.fromRGB(30, 30, 35),
-        Text = Color3.fromRGB(240, 240, 240)
-    },
-    Dark = {
-        Accent = Color3.fromRGB(0, 255, 150),
-        Dark = Color3.fromRGB(15, 15, 20),
-        Light = Color3.fromRGB(220, 220, 220),
-        Background = Color3.fromRGB(25, 25, 30),
-        Text = Color3.fromRGB(220, 220, 220)
-    },
-    Light = {
-        Accent = Color3.fromRGB(0, 120, 215),
-        Dark = Color3.fromRGB(240, 240, 240),
-        Light = Color3.fromRGB(20, 20, 25),
-        Background = Color3.fromRGB(230, 230, 235),
-        Text = Color3.fromRGB(20, 20, 25)
-    },
-    Neon = {
-        Accent = Color3.fromRGB(255, 0, 255),
-        Dark = Color3.fromRGB(10, 10, 15),
-        Light = Color3.fromRGB(255, 255, 255),
-        Background = Color3.fromRGB(20, 20, 30),
-        Text = Color3.fromRGB(255, 255, 255)
-    },
-    Ocean = {
-        Accent = Color3.fromRGB(0, 255, 255),
-        Dark = Color3.fromRGB(5, 15, 30),
-        Light = Color3.fromRGB(200, 240, 255),
-        Background = Color3.fromRGB(10, 25, 45),
-        Text = Color3.fromRGB(200, 240, 255)
-    },
-    Forest = {
-        Accent = Color3.fromRGB(0, 200, 100),
-        Dark = Color3.fromRGB(10, 20, 15),
-        Light = Color3.fromRGB(220, 240, 220),
-        Background = Color3.fromRGB(20, 30, 25),
-        Text = Color3.fromRGB(220, 240, 220)
-    },
-    Sunset = {
-        Accent = Color3.fromRGB(255, 100, 0),
-        Dark = Color3.fromRGB(30, 15, 10),
-        Light = Color3.fromRGB(255, 220, 180),
-        Background = Color3.fromRGB(40, 25, 20),
-        Text = Color3.fromRGB(255, 220, 180)
-    },
-    Cyber = {
-        Accent = Color3.fromRGB(255, 0, 100),
-        Dark = Color3.fromRGB(10, 5, 20),
-        Light = Color3.fromRGB(200, 220, 255),
-        Background = Color3.fromRGB(20, 15, 30),
-        Text = Color3.fromRGB(200, 220, 255)
-    },
-    Gold = {
-        Accent = Color3.fromRGB(255, 215, 0),
-        Dark = Color3.fromRGB(30, 25, 10),
-        Light = Color3.fromRGB(255, 240, 200),
-        Background = Color3.fromRGB(40, 35, 20),
-        Text = Color3.fromRGB(255, 240, 200)
-    },
-    Royal = {
-        Accent = Color3.fromRGB(150, 0, 255),
-        Dark = Color3.fromRGB(15, 5, 25),
-        Light = Color3.fromRGB(230, 220, 255),
-        Background = Color3.fromRGB(25, 15, 35),
-        Text = Color3.fromRGB(230, 220, 255)
-    }
-}
 
 -- Конструктор библиотеки
 function Xenon.new(config)
     config = config or {}
     
-    -- Определение размера для платформы
-    local defaultSize
-    if IsMobile() then
-        defaultSize = IsTablet() and UDim2.new(0.8, 0, 0.8, 0) or UDim2.new(0.9, 0, 0.9, 0)
-    else
-        defaultSize = UDim2.new(0, 600, 0, 400)
-    end
-    
     local self = setmetatable({
-        Theme = Themes[config.theme or "Default"],
-        WindowSize = config.size or defaultSize,
-        WindowPosition = config.position or UDim2.new(0.5, 0, 0.5, 0),
+        AccentColor = config.color or Color3.fromRGB(0, 170, 255),
+        DarkColor = Color3.fromRGB(20, 20, 25),
+        LightColor = Color3.fromRGB(240, 240, 240),
+        WindowSize = config.size or UDim2.new(0, 600, 0, 400),
+        WindowPosition = config.position or UDim2.new(0.5, -300, 0.5, -200),
         Tabs = {},
         CurrentTab = nil,
         Dragging = false,
         DragStart = nil,
         StartPos = nil,
-        Watermarks = {},
-        Notifications = {},
-        Elements = {},
-        Opened = false,
-        Platform = {
-            Mobile = IsMobile(),
-            Tablet = IsTablet(),
-            Desktop = not IsMobile()
-        },
-        TouchInput = false
+        Elements = {}
     }, Xenon)
     
     self:SetupMainWindow()
-    self:ApplyTheme(config.theme or "Default")
-    
-    -- Обработчик касаний для мобильных устройств
-    if self.Platform.Mobile then
-        self.TouchInput = true
-        self:SetupTouchControls()
-    end
-    
     return self
 end
 
--- Основное окно (адаптивное)
+-- Основное окно
 function Xenon:SetupMainWindow()
-    -- ScreenGui
     self.ScreenGui = Create("ScreenGui", {
         Name = "XenonUI",
         ResetOnSpawn = false,
-        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
     })
     
-    -- Main Window
     self.MainFrame = Create("Frame", {
         Name = "MainWindow",
         Size = UDim2.new(0, 0, 0, 0),
         Position = self.WindowPosition,
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = self.Theme.Dark,
-        BackgroundTransparency = 0.1,
-        BorderSizePixel = 0,
-        ClipsDescendants = true,
+        BackgroundColor3 = self.DarkColor,
         Parent = self.ScreenGui
     })
     
-    Create("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = self.MainFrame
-    })
+    Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = self.MainFrame})
     
     -- Top Bar
     self.TopBar = Create("Frame", {
         Name = "TopBar",
-        Size = UDim2.new(1, 0, 0, self.Platform.Mobile and 40 or 30),
+        Size = UDim2.new(1, 0, 0, 30),
         BackgroundColor3 = Color3.fromRGB(15, 15, 20),
-        BorderSizePixel = 0,
         Parent = self.MainFrame
     })
     
     self.Title = Create("TextLabel", {
-        Name = "Title",
         Text = "XENON UI",
         Font = Enum.Font.GothamBold,
-        TextSize = self.Platform.Mobile and 16 or 14,
-        TextColor3 = self.Theme.Light,
-        TextXAlignment = Enum.TextXAlignment.Left,
+        TextSize = 14,
+        TextColor3 = self.LightColor,
         Size = UDim2.new(0, 200, 1, 0),
         Position = UDim2.new(0, 15, 0, 0),
         BackgroundTransparency = 1,
@@ -207,22 +80,21 @@ function Xenon:SetupMainWindow()
     })
     
     self.CloseButton = Create("TextButton", {
-        Name = "CloseButton",
         Text = "×",
         Font = Enum.Font.GothamBold,
-        TextSize = self.Platform.Mobile and 22 or 18,
-        TextColor3 = self.Theme.Light,
-        Size = UDim2.new(0, self.Platform.Mobile and 40 or 30, 1, 0),
-        Position = UDim2.new(1, self.Platform.Mobile and -40 or -30, 0, 0),
+        TextSize = 18,
+        TextColor3 = self.LightColor,
+        Size = UDim2.new(0, 30, 1, 0),
+        Position = UDim2.new(1, -30, 0, 0),
         BackgroundTransparency = 1,
         Parent = self.TopBar
     })
     
-    -- Tab Buttons (адаптивные под платформу)
+    -- Tab Buttons
     self.TabButtonsFrame = Create("Frame", {
         Name = "TabButtons",
-        Size = UDim2.new(1, 0, 0, self.Platform.Mobile and 50 or 40),
-        Position = UDim2.new(0, 0, 0, self.Platform.Mobile and 40 or 30),
+        Size = UDim2.new(1, 0, 0, 40),
+        Position = UDim2.new(0, 0, 0, 30),
         BackgroundTransparency = 1,
         Parent = self.MainFrame
     })
@@ -230,140 +102,48 @@ function Xenon:SetupMainWindow()
     -- Tabs Container
     self.TabsContainer = Create("Frame", {
         Name = "TabsContainer",
-        Size = UDim2.new(1, 0, 1, -(self.Platform.Mobile and 90 or 70)),
-        Position = UDim2.new(0, 0, 0, self.Platform.Mobile and 90 or 70),
+        Size = UDim2.new(1, 0, 1, -70),
+        Position = UDim2.new(0, 0, 0, 70),
         BackgroundTransparency = 1,
         Parent = self.MainFrame
     })
     
-    -- Подключение функционала
+    -- Функционал
     self.CloseButton.MouseButton1Click:Connect(function()
         self:Close()
     end)
-    
-    -- Пере��аскивание окна (только для десктопа)
-    if not self.Platform.Mobile then
-        self.TopBar.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                self.Dragging = true
-                self.DragStart = input.Position
-                self.StartPos = self.MainFrame.Position
-                
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        self.Dragging = false
-                    end
-                end)
-            end
-        end)
-        
-        UserInputService.InputChanged:Connect(function(input)
-            if input == UserInputService:GetLastInputOfType(Enum.UserInputType.MouseMovement) then
-                if self.Dragging then
-                    local delta = input.Position - self.DragStart
-                    self.MainFrame.Position = UDim2.new(
-                        self.StartPos.X.Scale, 
-                        self.StartPos.X.Offset + delta.X, 
-                        self.StartPos.Y.Scale, 
-                        self.StartPos.Y.Offset + delta.Y
-                    )
-                end
-            end
-        end)
-    end
 end
 
--- Настройка тач-контролов для мобильных устройств
-function Xenon:SetupTouchControls()
-    -- Увеличение hitbox для кнопок
-    for _, tab in ipairs(self.Tabs) do
-        for _, button in ipairs(tab.Buttons) do
-            button.Size = UDim2.new(0, 120, 1, 0)
-        end
-    end
-    
-    -- Специальные настройки для слайдеров
-    for _, element in ipairs(self.Elements) do
-        if element.Type == "Slider" then
-            element.Bar.Size = UDim2.new(1, 0, 0, 8)
-            element.Button.Size = UDim2.new(0, 24, 0, 24)
-        end
-    end
-end
-
--- Применение темы
-function Xenon:ApplyTheme(themeName)
-    self.Theme = Themes[themeName] or Themes["Default"]
-    
-    -- Обновление цветов интерфейса
-    self.MainFrame.BackgroundColor3 = self.Theme.Dark
-    self.Title.TextColor3 = self.Theme.Light
-    self.CloseButton.TextColor3 = self.Theme.Light
-    
-    -- Обновление цветов всех элементов
-    for _, element in ipairs(self.Elements) do
-        if element.Type == "Button" then
-            element.BackgroundColor3 = self.Theme.Background
-        elseif element.Type == "Toggle" then
-            if element.Value then
-                element.Dot.BackgroundColor3 = self.Theme.Accent
-                element.ToggleButton.BackgroundColor3 = Color3.fromRGB(
-                    math.floor(self.Theme.Accent.R * 50),
-                    math.floor(self.Theme.Accent.G * 50),
-                    math.floor(self.Theme.Accent.B * 50)
-                )
-            end
-        elseif element.Type == "Slider" then
-            element.Fill.BackgroundColor3 = self.Theme.Accent
-        end
-    end
-end
-
--- Создание вкладки (адаптивное)
+-- Создание вкладки (исправлено)
 function Xenon:NewTab(name)
     local tab = {
         Name = name,
-        Sections = {},
-        Buttons = {}
+        Button = Create("TextButton", {
+            Name = name.."TabButton",
+            Text = name,
+            Font = Enum.Font.Gotham,
+            TextSize = 13,
+            TextColor3 = self.LightColor,
+            Size = UDim2.new(0, 100, 1, 0),
+            Position = UDim2.new(0, #self.Tabs * 100, 0, 0),
+            BackgroundTransparency = 1,
+            Parent = self.TabButtonsFrame
+        }),
+        Frame = Create("Frame", {
+            Name = name.."Tab",
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            Visible = false,
+            Parent = self.TabsContainer
+        })
     }
     
-    -- Кнопка таба
-    tab.Button = Create("TextButton", {
-        Name = name.."TabButton",
-        Text = name,
-        Font = Enum.Font.Gotham,
-        TextSize = self.Platform.Mobile and 14 or 13,
-        TextColor3 = self.Theme.Light,
-        Size = UDim2.new(0, self.Platform.Mobile and 120 or 100, 1, 0),
-        Position = UDim2.new(0, #self.Tabs * (self.Platform.Mobile and 120 or 100), 0, 0),
-        BackgroundTransparency = 1,
-        Parent = self.TabButtonsFrame
-    })
-    
-    -- Фрейм таба
-    tab.Frame = Create("Frame", {
-        Name = name.."Tab",
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Visible = false,
-        Parent = self.TabsContainer
-    })
-    
-    -- Обработчик клика/касания
-    local function handleInput()
+    tab.Button.MouseButton1Click:Connect(function()
         self:SwitchTab(tab)
-    end
-    
-    if self.Platform.Mobile then
-        tab.Button.TouchTap:Connect(handleInput)
-    else
-        tab.Button.MouseButton1Click:Connect(handleInput)
-    end
+    end)
     
     table.insert(self.Tabs, tab)
-    table.insert(self.Elements, {Type = "Tab", Object = tab.Button})
     
-    -- Активируем первую вкладку
     if #self.Tabs == 1 then
         self:SwitchTab(tab)
     end
@@ -371,162 +151,32 @@ function Xenon:NewTab(name)
     return tab
 end
 
--- Создание слайдера (адаптивного для платформ)
-function Xenon:NewSlider(section, config)
-    config = config or {}
-    
-    local slider = {
-        Value = config.default or config.min or 0,
-        Type = "Slider"
-    }
-    
-    local frame = Create("Frame", {
-        Name = config.name or "Slider",
-        Size = UDim2.new(1, 0, 0, self.Platform.Mobile and 60 or 50),
-        BackgroundTransparency = 1,
-        Parent = section.Content
-    })
-    
-    local label = Create("TextLabel", {
-        Name = "Label",
-        Text = config.name or "Slider",
-        Font = Enum.Font.Gotham,
-        TextSize = self.Platform.Mobile and 14 or 13,
-        TextColor3 = self.Theme.Light,
-        Size = UDim2.new(1, -60, 0, 20),
-        TextXAlignment = Enum.TextXAlignment.Left,
-        BackgroundTransparency = 1,
-        Parent = frame
-    })
-    
-    local valueLabel = Create("TextLabel", {
-        Name = "Value",
-        Text = tostring(slider.Value),
-        Font = Enum.Font.Gotham,
-        TextSize = self.Platform.Mobile and 13 or 12,
-        TextColor3 = self.Theme.Light,
-        Size = UDim2.new(0, 50, 0, 20),
-        Position = UDim2.new(1, -50, 0, 0),
-        TextXAlignment = Enum.TextXAlignment.Right,
-        BackgroundTransparency = 1,
-        Parent = frame
-    })
-    
-    local bar = Create("Frame", {
-        Name = "Bar",
-        Size = UDim2.new(1, 0, 0, self.Platform.Mobile and 8 or 4),
-        Position = UDim2.new(0, 0, 0, self.Platform.Mobile and 35 or 30),
-        BackgroundColor3 = Color3.fromRGB(50, 50, 55),
-        BorderSizePixel = 0,
-        Parent = frame
-    })
-    
-    Create("UICorner", {
-        CornerRadius = UDim.new(0, 2),
-        Parent = bar
-    })
-    
-    local fill = Create("Frame", {
-        Name = "Fill",
-        Size = UDim2.new(0, 0, 1, 0),
-        BackgroundColor3 = self.Theme.Accent,
-        BorderSizePixel = 0,
-        Parent = bar
-    })
-    
-    Create("UICorner", {
-        CornerRadius = UDim.new(0, 2),
-        Parent = fill
-    })
-    
-    local button = Create("TextButton", {
-        Name = "Button",
-        Text = "",
-        Size = UDim2.new(0, self.Platform.Mobile and 24 or 16, 0, self.Platform.Mobile and 24 or 16),
-        Position = UDim2.new(0, -self.Platform.Mobile and 12 or 8, 0.5, -self.Platform.Mobile and 12 or 8),
-        BackgroundColor3 = self.Theme.Light,
-        AutoButtonColor = false,
-        Parent = bar
-    })
-    
-    Create("UICorner", {
-        CornerRadius = UDim.new(0.5, 0),
-        Parent = button
-    })
-    
-    local dragging = false
-    
-    local function update(input)
-        local pos
-        if input then
-            pos = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-        else
-            pos = (slider.Value - (config.min or 0)) / ((config.max or 100) - (config.min or 0))
-        end
-        
-        slider.Value = math.floor((config.min or 0) + ((config.max or 100) - (config.min or 0)) * pos)
-        valueLabel.Text = tostring(slider.Value)
-        fill.Size = UDim2.new(pos, 0, 1, 0)
-        button.Position = UDim2.new(pos, -self.Platform.Mobile and 12 or 8, 0.5, -self.Platform.Mobile and 12 or 8)
-        
-        if config.callback then config.callback(slider.Value) end
+-- Метод SwitchTab (добавлен)
+function Xenon:SwitchTab(tab)
+    for _, t in ipairs(self.Tabs) do
+        t.Frame.Visible = false
     end
-    
-    -- Обработчики ввода (разные для платформ)
-    if self.Platform.Mobile then
-        button.TouchStarted:Connect(function()
-            dragging = true
-        end)
-        
-        button.TouchEnded:Connect(function()
-            dragging = false
-        end)
-        
-        bar.TouchStarted:Connect(function(input)
-            update(input)
-        end)
-        
-        UserInputService.TouchMoved:Connect(function(input)
-            if dragging then
-                update(input)
-            end
-        end)
-    else
-        button.MouseButton1Down:Connect(function()
-            dragging = true
-        end)
-        
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = false
-            end
-        end)
-        
-        bar.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                update(input)
-            end
-        end)
-        
-        UserInputService.InputChanged:Connect(function(input)
-            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                update(input)
-            end
-        end)
-    end
-    
-    update()
-    
-    function slider:Set(value)
-        slider.Value = math.clamp(value, config.min or 0, config.max or 100)
-        update()
-    end
-    
-    table.insert(self.Elements, slider)
-    return slider
+    tab.Frame.Visible = true
+    self.CurrentTab = tab
 end
 
--- Остальные методы (NewButton, NewToggle и т.д.) аналогично адаптируем под платформы
+-- Остальные методы (NewButton, NewToggle, NewSlider и т.д.)
 
--- Экспорт библиотеки
+-- Управление окном
+function Xenon:Open()
+    self.MainFrame.Visible = true
+    self.MainFrame.Size = UDim2.new(0, 0, 0, 0)
+    TweenService:Create(self.MainFrame, TweenInfo.new(0.5), {
+        Size = self.WindowSize
+    }):Play()
+end
+
+function Xenon:Close()
+    TweenService:Create(self.MainFrame, TweenInfo.new(0.3), {
+        Size = UDim2.new(0, 0, 0, 0)
+    }):Play()
+    wait(0.3)
+    self.MainFrame.Visible = false
+end
+
 return Xenon
