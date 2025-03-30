@@ -1,13 +1,15 @@
-local MoonLib = {Version = "3.1"}
-local UserInputService = game:GetService("UserInputService")
+local MoonLib = {Version = "4.1"}
+local UserInputService = game:GetService("User InputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
 
+-- Настройки тем
 local Themes = {
-    Nebula = {
-        Main = Color3.fromRGB(28, 32, 48),
-        Secondary = Color3.fromRGB(40, 45, 65),
-        Text = Color3.fromRGB(220, 230, 255),
+    Aurora = {
+        Main = Color3.fromRGB(25, 28, 42),
+        Secondary = Color3.fromRGB(35, 40, 60),
+        Text = Color3.fromRGB(230, 235, 255),
         Accent = Color3.fromRGB(100, 150, 255),
         Shadow = Color3.fromRGB(15, 20, 30),
         ScrollBar = Color3.fromRGB(80, 130, 220),
@@ -17,18 +19,41 @@ local Themes = {
         Divider = Color3.fromRGB(60, 70, 90),
         Warning = Color3.fromRGB(255, 120, 100),
         Success = Color3.fromRGB(100, 220, 150),
-        Input = Color3.fromRGB(35, 40, 55)
+        Input = Color3.fromRGB(35, 40, 55),
+        Overlay = Color3.fromRGB(20, 25, 35)
+    },
+    Midnight = {
+        Main = Color3.fromRGB(20, 22, 30),
+        Secondary = Color3.fromRGB(30, 33, 45),
+        Text = Color3.fromRGB(220, 225, 240),
+        Accent = Color3.fromRGB(120, 80, 220),
+        Shadow = Color3.fromRGB(10, 12, 20),
+        ScrollBar = Color3.fromRGB(100, 80, 200),
+        Slider = Color3.fromRGB(90, 70, 190),
+        Toggle = Color3.fromRGB(110, 90, 210),
+        Dropdown = Color3.fromRGB(40, 45, 60),
+        Divider = Color3.fromRGB(50, 55, 70),
+        Warning = Color3.fromRGB(220, 100, 100),
+        Success = Color3.fromRGB(90, 200, 120),
+        Input = Color3.fromRGB(30, 35, 50),
+        Overlay = Color3.fromRGB(15, 20, 30)
     }
 }
 
-MoonLib.Theme = "Nebula"
+MoonLib.Theme = "Aurora"
 MoonLib.WindowMinimizeKey = Enum.KeyCode.RightAlt
 MoonLib.Visible = true
+MoonLib.Configs = {}
+MoonLib.CurrentConfig = "Default"
+MoonLib.Transparency = 0
+MoonLib.MaxTransparency = 0.5 -- Максимальная прозрачность
+MoonLib.Notifications = {}
 
-local function RippleEffect(button)
+-- Утилиты
+local function RippleEffect(button, color)
     local ripple = Instance.new("Frame")
     ripple.Name = "Ripple"
-    ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ripple.BackgroundColor3 = color or Color3.fromRGB(255, 255, 255)
     ripple.BackgroundTransparency = 0.8
     ripple.ZIndex = 10
     ripple.Parent = button
@@ -55,48 +80,195 @@ end
 
 local function RoundCorners(obj, radius)
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, radius)
+    corner.CornerRadius = UDim.new(0, radius or 6)
     corner.Parent = obj
     return corner
 end
 
+local function UpdateTransparency(window, transparency)
+    for _, element in pairs(window:GetDescendants()) do
+        if element:IsA("Frame") and element.BackgroundTransparency < 1 then
+            element.BackgroundTransparency = element:GetAttribute("BaseTransparency") or 0 + transparency
+        elseif element:IsA("TextLabel") or element:IsA("TextButton") or element:Is
+        elseif element:IsA("TextLabel") or element:IsA("TextButton") or element:IsA("TextBox") then
+            element.TextTransparency = transparency
+        elseif element:IsA("ImageLabel") or element:IsA("ImageButton") then
+            element.ImageTransparency = transparency
+        end
+    end
+end
+
+-- Система уведомлений
+function MoonLib.Notify(title, text, duration)
+    duration = duration or 5
+    
+    local currentTheme = Themes[MoonLib.Theme]
+    local ScreenGui = game:GetService("CoreGui"):FindFirstChild("MoonLibNotifications") or Instance.new("ScreenGui")
+    ScreenGui.Name = "MoonLibNotifications"
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.Parent = game:GetService("CoreGui")
+    
+    local Notification = Instance.new("Frame")
+    Notification.Name = "Notification_"..tostring(#MoonLib.Notifications + 1)
+    Notification.BackgroundColor3 = currentTheme.Notification
+    Notification.BackgroundTransparency = 1
+    Notification.BorderSizePixel = 0
+    Notification.Position = UDim2.new(1, 0, 1, -50 - (#MoonLib.Notifications * 60))
+    Notification.Size = UDim2.new(0, 300, 0, 50)
+    Notification.AnchorPoint = Vector2.new(1, 1)
+    Notification.ZIndex = 20
+    RoundCorners(Notification, 8)
+    
+    local Shadow = Instance.new("ImageLabel")
+    Shadow.Name = "Shadow"
+    Shadow.BackgroundTransparency = 1
+    Shadow.Position = UDim2.new(0, -10, 0, -10)
+    Shadow.Size = UDim2.new(1, 20, 1, 20)
+    Shadow.ZIndex = 19
+    Shadow.Image = "rbxassetid://1316045217"
+    Shadow.ImageColor3 = currentTheme.Shadow
+    Shadow.ScaleType = Enum.ScaleType.Slice
+    Shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+    Shadow.Parent = Notification
+    
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Name = "Title"
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Position = UDim2.new(0, 10, 0, 5)
+    TitleLabel.Size = UDim2.new(1, -10, 0, 20)
+    TitleLabel.Font = Enum.Font.GothamSemibold
+    TitleLabel.Text = title
+    TitleLabel.TextColor3 = currentTheme.Text
+    TitleLabel.TextSize = 14
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.ZIndex = 21
+    TitleLabel.Parent = Notification
+    
+    local TextLabel = Instance.new("TextLabel")
+    TextLabel.Name = "Text"
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.Position = UDim2.new(0, 10, 0, 25)
+    TextLabel.Size = UDim2.new(1, -10, 0, 20)
+    TextLabel.Font = Enum.Font.Gotham
+    TextLabel.Text = text
+    TextLabel.TextColor3 = currentTheme.Text
+    TextLabel.TextTransparency = 0.2
+    TextLabel.TextSize = 12
+    TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TextLabel.ZIndex = 21
+    TextLabel.Parent = Notification
+    
+    Notification.Parent = ScreenGui
+    
+    -- Анимация появления
+    local appearTween = TweenService:Create(
+        Notification,
+        TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {
+            BackgroundTransparency = 0,
+            Position = UDim2.new(1, -10, 1, -50 - (#MoonLib.Notifications * 60))
+        }
+    )
+    appearTween:Play()
+    
+    table.insert(MoonLib.Notifications, Notification)
+    
+    -- Анимация исчезновения
+    delay(duration, function()
+        local disappearTween = TweenService:Create(
+            Notification,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {
+                BackgroundTransparency = 1,
+                Position = UDim2.new(1, 0, 1, -50 - (#MoonLib.Notifications * 60))
+            }
+        )
+        disappearTween:Play()
+        
+        disappearTween.Completed:Wait()
+        Notification:Destroy()
+        
+        -- Обновляем позиции оставшихся уведомлений
+        for i, notif in ipairs(MoonLib.Notifications) do
+            if notif == Notification then
+                table.remove(MoonLib.Notifications, i)
+                table.remove(MoonLib.Notifications, i)
+                break
+            end
+        end
+        
+        for i, notif in ipairs(MoonLib.Notifications) do
+            TweenService:Create(
+                notif,
+                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                {
+                    Position = UDim2.new(1, -10, 1, -50 - ((i-1) * 60))
+                }
+            ):Play()
+        end
+    end)
+
+    return Notification
+end
+
+-- Основные функции
 function MoonLib.SetTheme(themeName)
     if Themes[themeName] then
         MoonLib.Theme = themeName
+        -- Обновление всех элементов GUI при смене темы
+        UpdateTransparency(game:GetService("CoreGui"):FindFirstChild("MoonLibGUI"), MoonLib.Transparency)
     else
         warn("Тема '"..themeName.."' не найдена. Используется тема по умолчанию.")
     end
 end
 
+function MoonLib.SaveConfig(configName)
+    MoonLib.Configs[configName] = {
+        Theme = MoonLib.Theme,
+        Transparency = MoonLib.Transparency,
+        WindowMinimizeKey = MoonLib.WindowMinimizeKey
+        -- Здесь можно добавить другие настройки для сохранения
+    }
+    MoonLib.CurrentConfig = configName
+end
+
+function MoonLib.LoadConfig(configName)
+    if MoonLib.Configs[configName] then
+        local config = MoonLib.Configs[configName]
+        MoonLib.SetTheme(config.Theme)
+        MoonLib.Transparency = config.Transparency
+        MoonLib.WindowMinimizeKey = config.WindowMinimizeKey
+        MoonLib.CurrentConfig = configName
+        return true
+    end
+    return false
+end
+
 function MoonLib.CreateWindow(title, subtitle)
     local currentTheme = Themes[MoonLib.Theme]
     
+    -- Создаем уведомление о запуске
+    MoonLib.Notify("MoonLib", "MoonLib - Created", 3)
+    
     local ScreenGui = Instance.new("ScreenGui")
     local MainFrame = Instance.new("Frame")
-    local TopBar = Instance.new("Frame")
-    local Title = Instance.new("TextLabel")
-    local Subtitle = Instance.new("TextLabel")
-    local CloseButton = Instance.new("TextButton")
-    local MinimizeButton = Instance.new("TextButton")
-    local TabsContainer = Instance.new("Frame")
-    local UIListLayout = Instance.new("UIListLayout")
-    local ContentContainer = Instance.new("ScrollingFrame")
-    local ContentLayout = Instance.new("UIListLayout")
-    local ResizeHandle = Instance.new("Frame")
     
     -- Настройка ScreenGui
     ScreenGui.Name = "MoonLibGUI"
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ResetOnSpawn = false
     
-    -- Настройка MainFrame
+    -- Настройка MainFrame с начальной прозрачностью для анимации
     MainFrame.Name = "MainFrame"
     MainFrame.BackgroundColor3 = currentTheme.Main
+    MainFrame.BackgroundTransparency = 1
+    MainFrame:SetAttribute("BaseTransparency", 0)
     MainFrame.BorderSizePixel = 0
     MainFrame.Position = UDim2.new(0.3, 0, 0.2, 0)
     MainFrame.Size = UDim2.new(0, 450, 0, 500)
     MainFrame.ClipsDescendants = true
-    RoundCorners(MainFrame, 8)
+    RoundCorners(MainFrame, 12)
     
     -- Тень
     local shadow = Instance.new("ImageLabel")
@@ -112,1151 +284,87 @@ function MoonLib.CreateWindow(title, subtitle)
     shadow.Parent = MainFrame
     
     -- Верхняя панель
+    local TopBar = Instance.new("Frame")
     TopBar.Name = "TopBar"
     TopBar.BackgroundColor3 = currentTheme.Secondary
+    TopBar.BackgroundTransparency = MoonLib.Transparency
+    TopBar:SetAttribute("BaseTransparency", 0)
     TopBar.BorderSizePixel = 0
     TopBar.Size = UDim2.new(1, 0, 0, 60)
-    RoundCorners(TopBar, 8)
+    RoundCorners(TopBar, 12)
     TopBar.ZIndex = 2
-    
+
     -- Заголовок
+    local Title = Instance.new("TextLabel")
     Title.Name = "Title"
     Title.BackgroundTransparency = 1
+    Title.TextTransparency = MoonLib.Transparency
     Title.Position = UDim2.new(0, 15, 0, 10)
     Title.Size = UDim2.new(1, -30, 0, 24)
     Title.Font = Enum.Font.GothamSemibold
     Title.Text = title or "MoonLib Window"
     Title.TextColor3 = currentTheme.Text
     Title.TextSize = 18
+    Title.TextXAlignment = Enum.TextX
     Title.TextXAlignment = Enum.TextXAlignment.Left
-    
-    -- Подзаголовок
-    Subtitle.Name = "Subtitle"
-    Subtitle.BackgroundTransparency = 1
-    Subtitle.Position = UDim2.new(0, 15, 0, 34)
-    Subtitle.Size = UDim2.new(1, -30, 0, 16)
-    Subtitle.Font = Enum.Font.Gotham
-    Subtitle.Text = subtitle or ""
-    Subtitle.TextColor3 = Color3.fromRGB(180, 190, 220)
-    Subtitle.TextSize = 12
-    Subtitle.TextXAlignment = Enum.TextXAlignment.Left
-    
-    -- Кнопка закрытия
-    CloseButton.Name = "CloseButton"
-    CloseButton.BackgroundColor3 = currentTheme.Secondary
-    CloseButton.BorderSizePixel = 0
-    CloseButton.Position = UDim2.new(1, -70, 0, 10)
-    CloseButton.Size = UDim2.new(0, 25, 0, 25)
-    CloseButton.Font = Enum.Font.GothamBold
-    CloseButton.Text = "×"
-    CloseButton.TextColor3 = currentTheme.Text
-    CloseButton.TextSize = 20
-    CloseButton.ZIndex = 2
-    RoundCorners(CloseButton, 6)
-    
-    -- Кнопка сворачивания
-    MinimizeButton.Name = "MinimizeButton"
-    MinimizeButton.BackgroundColor3 = currentTheme.Secondary
-    MinimizeButton.BorderSizePixel = 0
-    MinimizeButton.Position = UDim2.new(1, -40, 0, 10)
-    MinimizeButton.Size = UDim2.new(0, 25, 0, 25)
-    MinimizeButton.Font = Enum.Font.GothamBold
-    MinimizeButton.Text = "-"
-    MinimizeButton.TextColor3 = currentTheme.Text
-    MinimizeButton.TextSize = 20
-    MinimizeButton.ZIndex = 2
-    RoundCorners(MinimizeButton, 6)
-    
-    -- Контейнер вкладок
-    TabsContainer.Name = "TabsContainer"
-    TabsContainer.BackgroundColor3 = currentTheme.Secondary
-    TabsContainer.BorderSizePixel = 0
-    TabsContainer.Position = UDim2.new(0, 10, 0, 65)
-    TabsContainer.Size = UDim2.new(1, -20, 0, 30)
-    TabsContainer.ZIndex = 2
-    RoundCorners(TabsContainer, 6)
-    
-    UIListLayout.Parent = TabsContainer
-    UIListLayout.FillDirection = Enum.FillDirection.Horizontal
-    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    UIListLayout.Padding = UDim.new(0, 5)
-    
-    -- Контейнер контента
-    ContentContainer.Name = "ContentContainer"
-    ContentContainer.Active = true
-    ContentContainer.BackgroundColor3 = currentTheme.Main
-    ContentContainer.BorderSizePixel = 0
-    ContentContainer.Position = UDim2.new(0, 10, 0, 105)
-    ContentContainer.Size = UDim2.new(1, -20, 1, -115)
-    ContentContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-    ContentContainer.ScrollBarThickness = 5
-    ContentContainer.ScrollBarImageColor3 = currentTheme.ScrollBar
-    ContentContainer.ScrollBarImageTransparency = 0.5
-    
-    ContentLayout.Parent = ContentContainer
-    ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    ContentLayout.Padding = UDim.new(0, 10)
-    
-    -- Ручка изменения размера
-    ResizeHandle.Name = "ResizeHandle"
-    ResizeHandle.BackgroundColor3 = currentTheme.Accent
-    ResizeHandle.BackgroundTransparency = 0.8
-    ResizeHandle.BorderSizePixel = 0
-    ResizeHandle.Position = UDim2.new(1, -15, 1, -15)
-    ResizeHandle.Size = UDim2.new(0, 15, 0, 15)
-    ResizeHandle.ZIndex = 2
-    RoundCorners(ResizeHandle, 4)
-    
-    -- Сборка интерфейса
-    TopBar.Parent = MainFrame
+    Title.ZIndex = 3
     Title.Parent = TopBar
-    Subtitle.Parent = TopBar
+
+    -- Кнопка закрытия
+    local CloseButton = Instance.new("TextButton")
+    CloseButton.Name = "CloseButton"
+    CloseButton.BackgroundTransparency = 1
+    CloseButton.Position = UDim2.new(1, -50, 0, 10)
+    CloseButton.Size = UDim2.new(0, 40, 0, 24)
+    CloseButton.Font = Enum.Font.GothamBold
+    CloseButton.Text = "X"
+    CloseButton.TextColor3 = currentTheme.Text
+    CloseButton.TextSize = 18
+    CloseButton.TextXAlignment = Enum.TextXAlignment.Center
+    CloseButton.ZIndex = 3
     CloseButton.Parent = TopBar
-    MinimizeButton.Parent = TopBar
-    TabsContainer.Parent = MainFrame
-    ContentContainer.Parent = MainFrame
-    ResizeHandle.Parent = MainFrame
-    MainFrame.Parent = ScreenGui
-    
-    -- Функционал перетаскивания
-    local dragging
-    local dragInput
-    local dragStart
-    local startPos
-    
-    local function update(input)
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-    
-    TopBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = MainFrame.Position
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-    
-    TopBar.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            update(input)
-        end
-    end)
-    
-    -- Функционал изменения размера
-    local resizing
-    local resizeInput
-    local resizeStart
-    local startSize
-    
-    ResizeHandle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            resizing = true
-            resizeStart = input.Position
-            startSize = MainFrame.Size
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    resizing = false
-                end
-            end)
-        end
-    end)
-    
-    ResizeHandle.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            resizeInput = input
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if input == resizeInput and resizing then
-            local delta = input.Position - resizeStart
-            local newSize = UDim2.new(
-                startSize.X.Scale, 
-                math.max(300, startSize.X.Offset + delta.X), 
-                startSize.Y.Scale, 
-                math.max(200, startSize.Y.Offset + delta.Y)
-            )
-            MainFrame.Size = newSize
-        end
-    end)
-    
-    -- Функционал кнопок
-    CloseButton.MouseEnter:Connect(function()
-        CloseButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-    end)
-    
-    CloseButton.MouseLeave:Connect(function()
-        CloseButton.BackgroundColor3 = currentTheme.Secondary
-    end)
-    
+
+    -- Обработчик нажатия кнопки закрытия
     CloseButton.MouseButton1Click:Connect(function()
+        -- Анимация исчезновения окна
+        local disappearTween = TweenService:Create(
+            MainFrame,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {
+                BackgroundTransparency = 1
+            }
+        )
+        disappearTween:Play()
+        disappearTween.Completed:Wait()
         ScreenGui:Destroy()
     end)
-    
-    MinimizeButton.MouseEnter:Connect(function()
-        MinimizeButton.BackgroundColor3 = currentTheme.Accent
-    end)
-    
-    MinimizeButton.MouseLeave:Connect(function()
-        MinimizeButton.BackgroundColor3 = currentTheme.Secondary
-    end)
-    
-    MinimizeButton.MouseButton1Click:Connect(function()
-        ContentContainer.Visible = not ContentContainer.Visible
-        TabsContainer.Visible = not TabsContainer.Visible
-        
-        if ContentContainer.Visible then
-            MainFrame.Size = UDim2.new(MainFrame.Size.X.Scale, MainFrame.Size.X.Offset, 0, 500)
-        else
-            MainFrame.Size = UDim2.new(MainFrame.Size.X.Scale, MainFrame.Size.X.Offset, 0, 60)
-        end
-    end)
-    
-    -- Горячая клавиша для сворачивания
-    UserInputService.InputBegan:Connect(function(input, processed)
-        if not processed and input.KeyCode == MoonLib.WindowMinimizeKey then
-            MinimizeButton.MouseButton1Click:Fire()
-        end
-    end)
-    
-    local window = {}
-    local tabs = {}
-    
-    -- Функция добавления вкладки
-    function window:AddTab(tabName)
-        local currentTheme = Themes[MoonLib.Theme]
-        
-        local TabButton = Instance.new("TextButton")
-        local TabContent = Instance.new("ScrollingFrame")
-        local TabContentLayout = Instance.new("UIListLayout")
-        
-        -- Настройка кнопки вкладки
-        TabButton.Name = tabName
-        TabButton.BackgroundColor3 = currentTheme.Secondary
-        TabButton.BorderSizePixel = 0
-        TabButton.Size = UDim2.new(0, 100, 0.8, 0)
-        TabButton.Font = Enum.Font.GothamSemibold
-        TabButton.Text = tabName
-        TabButton.TextColor3 = currentTheme.Text
-        TabButton.TextSize = 12
-        TabButton.AutoButtonColor = false
-        TabButton.ZIndex = 2
-        RoundCorners(TabButton, 6)
-        
-        -- Настройка контента вкладки
-        TabContent.Name = tabName
-        TabContent.Active = true
-        TabContent.BackgroundColor3 = currentTheme.Main
-        TabContent.BorderSizePixel = 0
-        TabContent.Size = UDim2.new(1, 0, 1, 0)
-        TabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
-        TabContent.ScrollBarThickness = 5
-        TabContent.ScrollBarImageColor3 = currentTheme.ScrollBar
-        TabContent.ScrollBarImageTransparency = 0.5
-        TabContent.Visible = false
-        
-        TabContentLayout.Parent = TabContent
-        TabContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        TabContentLayout.Padding = UDim.new(0, 10)
-        
-        TabButton.Parent = TabsContainer
-        TabContent.Parent = ContentContainer
-        
-        local tab = {}
-        
-        -- Функция добавления секции
-        function tab:AddSection(title)
-            local section = {}
-            
-            local SectionFrame = Instance.new("Frame")
-            SectionFrame.Name = "SectionFrame"
-            SectionFrame.BackgroundTransparency = 1
-            SectionFrame.Size = UDim2.new(1, 0, 0, 0)
-            SectionFrame.AutomaticSize = Enum.AutomaticSize.Y
-            
-            local SectionLabel = Instance.new("TextLabel")
-            SectionLabel.Name = "SectionLabel"
-            SectionLabel.BackgroundTransparency = 1
-            SectionLabel.Position = UDim2.new(0, 0, 0, 0)
-            SectionLabel.Size = UDim2.new(1, 0, 0, 20)
-            SectionLabel.Font = Enum.Font.GothamSemibold
-            SectionLabel.Text = title
-            SectionLabel.TextColor3 = currentTheme.Text
-            SectionLabel.TextSize = 14
-            SectionLabel.TextXAlignment = Enum.TextXAlignment.Left
-            SectionLabel.Parent = SectionFrame
-            
-            local SectionContent = Instance.new("Frame")
-            SectionContent.Name = "SectionContent"
-            SectionContent.BackgroundTransparency = 1
-            SectionContent.Position = UDim2.new(0, 0, 0, 25)
-            SectionContent.Size = UDim2.new(1, 0, 0, 0)
-            SectionContent.AutomaticSize = Enum.AutomaticSize.Y
-            
-            local SectionLayout = Instance.new("UIListLayout")
-            SectionLayout.Parent = SectionContent
-            SectionLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            SectionLayout.Padding = UDim.new(0, 5)
-            
-            SectionContent.Parent = SectionFrame
-            SectionFrame.Parent = TabContent
-            
-            -- Функция добавления кнопки
-            function section:AddButton(text, callback)
-                local ButtonFrame = Instance.new("Frame")
-                ButtonFrame.BackgroundTransparency = 1
-                ButtonFrame.Size = UDim2.new(1, 0, 0, 30)
-                
-                local Button = Instance.new("TextButton")
-                Button.Name = text
-                Button.BackgroundColor3 = currentTheme.Secondary
-                Button.BorderSizePixel = 0
-                Button.Size = UDim2.new(1, 0, 1, 0)
-                Button.Font = Enum.Font.GothamSemibold
-                Button.Text = text
-                Button.TextColor3 = currentTheme.Text
-                Button.TextSize = 12
-                Button.AutoButtonColor = false
-                RoundCorners(Button, 4)
-                
-                Button.MouseButton1Click:Connect(function()
-                    RippleEffect(Button)
-                    if callback then callback() end
-                end)
-                
-                Button.MouseEnter:Connect(function()
-                    TweenService:Create(
-                        Button,
-                        TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                        {BackgroundColor3 = currentTheme.Accent}
-                    ):Play()
-                end)
-                
-                Button.MouseLeave:Connect(function()
-                    TweenService:Create(
-                        Button,
-                        TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                        {BackgroundColor3 = currentTheme.Secondary}
-                    ):Play()
-                end)
-                
-                Button.Parent = ButtonFrame
-                ButtonFrame.Parent = SectionContent
-                
-                return {
-                    SetText = function(self, newText)
-                        Button.Text = newText
-                    end,
-                    SetCallback = function(self, newCallback)
-                        callback = newCallback
-                    end
-                }
-            end
-            
-            -- Функция добавления переключателя
-            function section:AddToggle(text, default, callback)
-                local ToggleFrame = Instance.new("Frame")
-                ToggleFrame.BackgroundTransparency = 1
-                ToggleFrame.Size = UDim2.new(1, 0, 0, 30)
-                
-                local ToggleButton = Instance.new("TextButton")
-                ToggleButton.Name = "ToggleButton"
-                ToggleButton.BackgroundColor3 = currentTheme.Secondary
-                ToggleButton.BorderSizePixel = 0
-                ToggleButton.Position = UDim2.new(0, 0, 0.5, -10)
-                ToggleButton.Size = UDim2.new(0, 20, 0, 20)
-                ToggleButton.Font = Enum.Font.SourceSans
-                ToggleButton.Text = ""
-                ToggleButton.AutoButtonColor = false
-                RoundCorners(ToggleButton, 4)
-                
-                local ToggleIndicator = Instance.new("Frame")
-                ToggleIndicator.Name = "ToggleIndicator"
-                ToggleIndicator.BackgroundColor3 = currentTheme.Toggle
-                ToggleIndicator.BorderSizePixel = 0
-                ToggleIndicator.Position = UDim2.new(0, 2, 0, 2)
-                ToggleIndicator.Size = UDim2.new(1, -4, 1, -4)
-                ToggleIndicator.Visible = default or false
-                RoundCorners(ToggleIndicator, 2)
-                
-                local ToggleLabel = Instance.new("TextLabel")
-                ToggleLabel.Name = "ToggleLabel"
-                ToggleLabel.BackgroundTransparency = 1
-                ToggleLabel.Position = UDim2.new(0, 30, 0, 0)
-                ToggleLabel.Size = UDim2.new(1, -30, 1, 0)
-                ToggleLabel.Font = Enum.Font.Gotham
-                ToggleLabel.Text = text
-                ToggleLabel.TextColor3 = currentTheme.Text
-                ToggleLabel.TextSize = 12
-                ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
-                
-                ToggleIndicator.Parent = ToggleButton
-                ToggleButton.Parent = ToggleFrame
-                ToggleLabel.Parent = ToggleFrame
-                ToggleFrame.Parent = SectionContent
-                
-                local toggled = default or false
-                
-                ToggleButton.MouseButton1Click:Connect(function()
-                    toggled = not toggled
-                    ToggleIndicator.Visible = toggled
-                    if callback then callback(toggled) end
-                end)
-                
-                return {
-                    Set = function(self, state)
-                        toggled = state
-                        ToggleIndicator.Visible = state
-                    end,
-                    Get = function(self)
-                        return toggled
-                    end
-                }
-            end
-            
-            -- Функция добавления слайдера
-            function section:AddSlider(text, min, max, default, callback)
-                local SliderFrame = Instance.new("Frame")
-                SliderFrame.BackgroundTransparency = 1
-                SliderFrame.Size = UDim2.new(1, 0, 0, 50)
-                
-                local SliderLabel = Instance.new("TextLabel")
-                SliderLabel.Name = "SliderLabel"
-                SliderLabel.BackgroundTransparency = 1
-                SliderLabel.Position = UDim2.new(0, 0, 0, 0)
-                SliderLabel.Size = UDim2.new(1, 0, 0, 20)
-                SliderLabel.Font = Enum.Font.Gotham
-                SliderLabel.Text = text
-                SliderLabel.TextColor3 = currentTheme.Text
-                SliderLabel.TextSize = 12
-                SliderLabel.TextXAlignment = Enum.TextXAlignment.Left
-                SliderLabel.Parent = SliderFrame
-                
-                local SliderValue = Instance.new("TextLabel")
-                SliderValue.Name = "SliderValue"
-                SliderValue.BackgroundTransparency = 1
-                SliderValue.Position = UDim2.new(0.5, 0, 0, 0)
-                SliderValue.Size = UDim2.new(0.5, 0, 0, 20)
-                SliderValue.Font = Enum.Font.Gotham
-                SliderValue.Text = tostring(default or min)
-                SliderValue.TextColor3 = currentTheme.Text
-                SliderValue.TextSize = 12
-                SliderValue.TextXAlignment = Enum.TextXAlignment.Right
-                SliderValue.Parent = SliderFrame
-                
-                local SliderTrack = Instance.new("Frame")
-                SliderTrack.Name = "SliderTrack"
-                SliderTrack.BackgroundColor3 = currentTheme.Secondary
-                SliderTrack.BorderSizePixel = 0
-                SliderTrack.Position = UDim2.new(0, 0, 0, 25)
-                SliderTrack.Size = UDim2.new(1, 0, 0, 5)
-                RoundCorners(SliderTrack, 3)
-                
-                local SliderFill = Instance.new("Frame")
-                SliderFill.Name = "SliderFill"
-                SliderFill.BackgroundColor3 = currentTheme.Slider
-                SliderFill.BorderSizePixel = 0
-                SliderFill.Position = UDim2.new(0, 0, 0, 0)
-                SliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-                RoundCorners(SliderFill, 3)
-                
-                local SliderButton = Instance.new("TextButton")
-                SliderButton.Name = "SliderButton"
-                SliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                SliderButton.BackgroundTransparency = 1
-                SliderButton.BorderSizePixel = 0
-                SliderButton.Position = UDim2.new((default - min) / (max - min), -8, 0, -4)
-                SliderButton.Size = UDim2.new(0, 16, 0, 16)
-                SliderButton.Font = Enum.Font.SourceSans
-                SliderButton.Text = ""
-                SliderButton.ZIndex = 2
-                RoundCorners(SliderButton, 8)
-                
-                SliderFill.Parent = SliderTrack
-                SliderButton.Parent = SliderTrack
-                SliderTrack.Parent = SliderFrame
-                SliderFrame.Parent = SectionContent
-                
-                local sliding = false
-                local value = default or min
-                
-                local function updateSlider(input)
-                    local relativeX = (input.Position.X - SliderTrack.AbsolutePosition.X) / SliderTrack.AbsoluteSize.X
-                    relativeX = math.clamp(relativeX, 0, 1)
-                    
-                    value = math.floor(min + (max - min) * relativeX)
-                    SliderValue.Text = tostring(value)
-                    SliderFill.Size = UDim2.new(relativeX, 0, 1, 0)
-                    SliderButton.Position = UDim2.new(relativeX, -8, 0, -4)
-                    
-                    if callback then callback(value) end
-                end
-                
-                SliderButton.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        sliding = true
-                        updateSlider(input)
-                    end
-                end)
-                
-                SliderButton.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        sliding = false
-                    end
-                end)
-                
-                UserInputService.InputChanged:Connect(function(input)
-                    if sliding and input.UserInputType == Enum.UserInputType.MouseMovement then
-                        updateSlider(input)
-                    end
-                end)
-                
-                SliderTrack.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        updateSlider(input)
-                    end
-                end)
-                
-                return {
-                    Set = function(self, newValue)
-                        value = math.clamp(newValue, min, max)
-                        SliderValue.Text = tostring(value)
-                        local relativeX = (value - min) / (max - min)
-                        SliderFill.Size = UDim2.new(relativeX, 0, 1, 0)
-                        SliderButton.Position = UDim2.new(relativeX, -8, 0, -4)
-                    end,
-                    Get = function(self)
-                        return value
-                    end
-                }
-            end
-            
-            -- Функция добавления выпадающего списка
-            function section:AddDropdown(text, options, default, callback)
-                local DropdownFrame = Instance.new("Frame")
-                DropdownFrame.BackgroundTransparency = 1
-                DropdownFrame.Size = UDim2.new(1, 0, 0, 60)
-                
-                local DropdownLabel = Instance.new("TextLabel")
-                DropdownLabel.Name = "DropdownLabel"
-                DropdownLabel.BackgroundTransparency = 1
-                DropdownLabel.Position = UDim2.new(0, 0, 0, 0)
-                DropdownLabel.Size = UDim2.new(1, 0, 0, 20)
-                DropdownLabel.Font = Enum.Font.Gotham
-                DropdownLabel.Text = text
-                DropdownLabel.TextColor3 = currentTheme.Text
-                DropdownLabel.TextSize = 12
-                DropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
-                DropdownLabel.Parent = DropdownFrame
-                
-                local DropdownButton = Instance.new("TextButton")
-                DropdownButton.Name = "DropdownButton"
-                DropdownButton.BackgroundColor3 = currentTheme.Dropdown
-                DropdownButton.BorderSizePixel = 0
-                DropdownButton.Position = UDim2.new(0, 0, 0, 25)
-                DropdownButton.Size = UDim2.new(1, 0, 0, 25)
-                DropdownButton.Font = Enum.Font.SourceSans
-                DropdownButton.Text = ""
-                DropdownButton.AutoButtonColor = false
-                RoundCorners(DropdownButton, 4)
-                
-                local DropdownValue = Instance.new("TextLabel")
-                DropdownValue.Name = "DropdownValue"
-                DropdownValue.BackgroundTransparency = 1
-                DropdownValue.Position = UDim2.new(0, 10, 0, 0)
-                DropdownValue.Size = UDim2.new(1, -30, 1, 0)
-                DropdownValue.Font = Enum.Font.Gotham
-                DropdownValue.Text = default or options[1] or ""
-                DropdownValue.TextColor3 = currentTheme.Text
-                DropdownValue.TextSize = 12
-                DropdownValue.TextXAlignment = Enum.TextXAlignment.Left
-                DropdownValue.Parent = DropdownButton
-                
-                local DropdownArrow = Instance.new("ImageLabel")
-                DropdownArrow.Name = "DropdownArrow"
-                DropdownArrow.BackgroundTransparency = 1
-                DropdownArrow.Position = UDim2.new(1, -20, 0.5, -5)
-                DropdownArrow.Size = UDim2.new(0, 10, 0, 10)
-                DropdownArrow.Image = "rbxassetid://6031090990"
-                DropdownArrow.ImageColor3 = currentTheme.Text
-                DropdownArrow.Parent = DropdownButton
-                
-                local DropdownList = Instance.new("ScrollingFrame")
-                DropdownList.Name = "DropdownList"
-                DropdownList.Active = true
-                DropdownList.BackgroundColor3 = currentTheme.Dropdown
-                DropdownList.BorderSizePixel = 0
-                DropdownList.Position = UDim2.new(0, 0, 0, 55)
-                DropdownList.Size = UDim2.new(1, 0, 0, 0)
-                DropdownList.CanvasSize = UDim2.new(0, 0, 0, 0)
-                DropdownList.ScrollBarThickness = 5
-                DropdownList.ScrollBarImageColor3 = currentTheme.ScrollBar
-                DropdownList.Visible = false
-                RoundCorners(DropdownList, 4)
-                
-                local DropdownListLayout = Instance.new("UIListLayout")
-                DropdownListLayout.Name = "DropdownListLayout"
-                DropdownListLayout.Parent = DropdownList
-                DropdownListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                DropdownListLayout.Padding = UDim.new(0, 2)
-                
-                DropdownButton.Parent = DropdownFrame
-                DropdownList.Parent = DropdownFrame
-                DropdownFrame.Parent = SectionContent
-                
-                local selected = default or options[1]
-                local isOpen = false
-                
-                local function toggleDropdown()
-                    isOpen = not isOpen
-                    
-                    if isOpen then
-                        DropdownList.Visible = true
-                        TweenService:Create(
-                            DropdownList,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Size = UDim2.new(1, 0, 0, math.min(#options * 25, 150))}
-                        ):Play()
-                        TweenService:Create(
-                            DropdownArrow,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Rotation = 180}
-                        ):Play()
-                    else
-                        TweenService:Create(
-                            DropdownList,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Size = UDim2.new(1, 0, 0, 0)}
-                        ):Play()
-                        TweenService:Create(
-                            DropdownArrow,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Rotation = 0}
-                        ):Play()
-                        wait(0.2)
-                        DropdownList.Visible = false
-                    end
-                end
-                
-                DropdownButton.MouseButton1Click:Connect(toggleDropdown)
-                
-                -- Создание элементов списка
-                for i, option in ipairs(options) do
-                    local OptionButton = Instance.new("TextButton")
-                    
-                    OptionButton.Name = option
-                    OptionButton.BackgroundColor3 = currentTheme.Dropdown
-                    OptionButton.BackgroundTransparency = 1
-                    OptionButton.BorderSizePixel = 0
-                    OptionButton.Size = UDim2.new(1, 0, 0, 25)
-                    OptionButton.Font = Enum.Font.Gotham
-                    OptionButton.Text = option
-                    OptionButton.TextColor3 = currentTheme.Text
-                    OptionButton.TextSize = 12
-                    OptionButton.TextXAlignment = Enum.TextXAlignment.Left
-                    OptionButton.AutoButtonColor = false
-                    
-                    OptionButton.MouseEnter:Connect(function()
-                        OptionButton.BackgroundTransparency = 0.9
-                    end)
-                    
-                    OptionButton.MouseLeave:Connect(function()
-                        OptionButton.BackgroundTransparency = 1
-                    end)
-                    
-                    OptionButton.MouseButton1Click:Connect(function()
-                        selected = option
-                        DropdownValue.Text = option
-                        toggleDropdown()
-                        if callback then callback(option) end
-                    end)
-                    
-                    OptionButton.Parent = DropdownList
-                end
-                
-                DropdownList.CanvasSize = UDim2.new(0, 0, 0, #options * 25)
-                
-                return {
-                    Set = function(self, value)
-                        if table.find(options, value) then
-                            selected = value
-                            DropdownValue.Text = value
-                        end
-                    end,
-                    Get = function(self)
-                        return selected
-                    end
-                }
-            end
-            
-            -- Функция добавления мультивыпадающего списка
-            function section:AddMultiDropdown(text, options, default, callback)
-                local MultiDropdownFrame = Instance.new("Frame")
-                MultiDropdownFrame.BackgroundTransparency = 1
-                MultiDropdownFrame.Size = UDim2.new(1, 0, 0, 60)
-                
-                local MultiDropdownLabel = Instance.new("TextLabel")
-                MultiDropdownLabel.Name = "MultiDropdownLabel"
-                MultiDropdownLabel.BackgroundTransparency = 1
-                MultiDropdownLabel.Position = UDim2.new(0, 0, 0, 0)
-                MultiDropdownLabel.Size = UDim2.new(1, 0, 0, 20)
-                MultiDropdownLabel.Font = Enum.Font.Gotham
-                MultiDropdownLabel.Text = text
-                MultiDropdownLabel.TextColor3 = currentTheme.Text
-                MultiDropdownLabel.TextSize = 12
-                MultiDropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
-                MultiDropdownLabel.Parent = MultiDropdownFrame
-                
-                local MultiDropdownButton = Instance.new("TextButton")
-                MultiDropdownButton.Name = "MultiDropdownButton"
-                MultiDropdownButton.BackgroundColor3 = currentTheme.Dropdown
-                MultiDropdownButton.BorderSizePixel = 0
-                MultiDropdownButton.Position = UDim2.new(0, 0, 0, 25)
-                MultiDropdownButton.Size = UDim2.new(1, 0, 0, 25)
-                MultiDropdownButton.Font = Enum.Font.SourceSans
-                MultiDropdownButton.Text = ""
-                MultiDropdownButton.AutoButtonColor = false
-                RoundCorners(MultiDropdownButton, 4)
-                
-                local MultiDropdownValue = Instance.new("TextLabel")
-                MultiDropdownValue.Name = "MultiDropdownValue"
-                MultiDropdownValue.BackgroundTransparency = 1
-                MultiDropdownValue.Position = UDim2.new(0, 10, 0, 0)
-                MultiDropdownValue.Size = UDim2.new(1, -30, 1, 0)
-                MultiDropdownValue.Font = Enum.Font.Gotham
-                MultiDropdownValue.Text = table.concat(default or {options[1]}, ", ") or ""
-                MultiDropdownValue.TextColor3 = currentTheme.Text
-                MultiDropdownValue.TextSize = 12
-                MultiDropdownValue.TextXAlignment = Enum.TextXAlignment.Left
-                MultiDropdownValue.Parent = MultiDropdownButton
-                
-                local MultiDropdownArrow = Instance.new("ImageLabel")
-                MultiDropdownArrow.Name = "MultiDropdownArrow"
-                MultiDropdownArrow.BackgroundTransparency = 1
-                MultiDropdownArrow.Position = UDim2.new(1, -20, 0.5, -5)
-                MultiDropdownArrow.Size = UDim2.new(0, 10, 0, 10)
-                MultiDropdownArrow.Image = "rbxassetid://6031090990"
-                MultiDropdownArrow.ImageColor3 = currentTheme.Text
-                MultiDropdownArrow.Parent = MultiDropdownButton
-                
-                local MultiDropdownList = Instance.new("ScrollingFrame")
-                MultiDropdownList.Name = "MultiDropdownList"
-                MultiDropdownList.Active = true
-                MultiDropdownList.BackgroundColor3 = currentTheme.Dropdown
-                MultiDropdownList.BorderSizePixel = 0
-                MultiDropdownList.Position = UDim2.new(0, 0, 0, 55)
-                MultiDropdownList.Size = UDim2.new(1, 0, 0, 0)
-                MultiDropdownList.CanvasSize = UDim2.new(0, 0, 0, 0)
-                MultiDropdownList.ScrollBarThickness = 5
-                MultiDropdownList.ScrollBarImageColor3 = currentTheme.ScrollBar
-                MultiDropdownList.Visible = false
-                RoundCorners(MultiDropdownList, 4)
-                
-                local MultiDropdownListLayout = Instance.new("UIListLayout")
-                MultiDropdownListLayout.Name = "MultiDropdownListLayout"
-                MultiDropdownListLayout.Parent = MultiDropdownList
-                MultiDropdownListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                MultiDropdownListLayout.Padding = UDim.new(0, 2)
-                
-                MultiDropdownButton.Parent = MultiDropdownFrame
-                MultiDropdownList.Parent = MultiDropdownFrame
-                MultiDropdownFrame.Parent = SectionContent
-                
-                local selected = default or {options[1]}
-                local isOpen = false
-                
-                local function toggleDropdown()
-                    isOpen = not isOpen
-                    
-                    if isOpen then
-                        MultiDropdownList.Visible = true
-                        TweenService:Create(
-                            MultiDropdownList,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Size = UDim2.new(1, 0, 0, math.min(#options * 25, 150))}
-                        ):Play()
-                        TweenService:Create(
-                            MultiDropdownArrow,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Rotation = 180}
-                        ):Play()
-                    else
-                        TweenService:Create(
-                            MultiDropdownList,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Size = UDim2.new(1, 0, 0, 0)}
-                        ):Play()
-                        TweenService:Create(
-                            MultiDropdownArrow,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Rotation = 0}
-                        ):Play()
-                        wait(0.2)
-                        MultiDropdownList.Visible = false
-                    end
-                end
-                
-                MultiDropdownButton.MouseButton1Click:Connect(toggleDropdown)
-                
-                -- Создание элементов списка
-                for i, option in ipairs(options) do
-                    local OptionFrame = Instance.new("Frame")
-                    OptionFrame.BackgroundTransparency = 1
-                    OptionFrame.Size = UDim2.new(1, 0, 0, 25)
-                    
-                    local OptionButton = Instance.new("TextButton")
-                    OptionButton.Name = option
-                    OptionButton.BackgroundColor3 = currentTheme.Dropdown
-                    OptionButton.BackgroundTransparency = 1
-                    OptionButton.BorderSizePixel = 0
-                    OptionButton.Size = UDim2.new(1, -25, 1, 0)
-                    OptionButton.Font = Enum.Font.Gotham
-                    OptionButton.Text = option
-                    OptionButton.TextColor3 = currentTheme.Text
-                    OptionButton.TextSize = 12
-                    OptionButton.TextXAlignment = Enum.TextXAlignment.Left
-                    OptionButton.AutoButtonColor = false
-                    
-                    local OptionToggle = Instance.new("Frame")
-                    OptionToggle.Name = "OptionToggle"
-                    OptionToggle.BackgroundColor3 = currentTheme.Secondary
-                    OptionToggle.BorderSizePixel = 0
-                    OptionToggle.Position = UDim2.new(1, -20, 0.5, -8)
-                    OptionToggle.Size = UDim2.new(0, 16, 0, 16)
-                    RoundCorners(OptionToggle, 4)
-                    
-                    local OptionToggleIndicator = Instance.new("Frame")
-                    OptionToggleIndicator.Name = "OptionToggleIndicator"
-                    OptionToggleIndicator.BackgroundColor3 = currentTheme.Toggle
-                    OptionToggleIndicator.BorderSizePixel = 0
-                    OptionToggleIndicator.Position = UDim2.new(0, 2, 0, 2)
-                    OptionToggleIndicator.Size = UDim2.new(1, -4, 1, -4)
-                    OptionToggleIndicator.Visible = table.find(selected, option) ~= nil
-                    RoundCorners(OptionToggleIndicator, 2)
-                    
-                    OptionToggleIndicator.Parent = OptionToggle
-                    OptionButton.Parent = OptionFrame
-                    OptionToggle.Parent = OptionFrame
-                    OptionFrame.Parent = MultiDropdownList
-                    
-                    OptionButton.MouseEnter:Connect(function()
-                        OptionButton.BackgroundTransparency = 0.9
-                    end)
-                    
-                    OptionButton.MouseLeave:Connect(function()
-                        OptionButton.BackgroundTransparency = 1
-                    end)
-                    
-                    OptionButton.MouseButton1Click:Connect(function()
-                        local index = table.find(selected, option)
-                        if index then
-                            table.remove(selected, index)
-                        else
-                            table.insert(selected, option)
-                        end
-                        OptionToggleIndicator.Visible = not OptionToggleIndicator.Visible
-                        MultiDropdownValue.Text = table.concat(selected, ", ")
-                        if callback then callback(selected) end
-                    end)
-                end
-                
-                MultiDropdownList.CanvasSize = UDim2.new(0, 0, 0, #options * 25)
-                
-                return {
-                    Set = function(self, values)
-                        selected = values
-                        MultiDropdownValue.Text = table.concat(values, ", ")
-                        -- Обновить состояние тогглов в списке
-                        for _, child in ipairs(MultiDropdownList:GetChildren()) do
-                            if child:IsA("Frame") and child.Name ~= "OptionToggle" then
-                                local option = child:FindFirstChildOfClass("TextButton").Text
-                                local toggle = child:FindFirstChild("OptionToggle")
-                                if toggle then
-                                    toggle:FindFirstChild("OptionToggleIndicator").Visible = table.find(values, option) ~= nil
-                                end
-                            end
-                        end
-                    end,
-                    Get = function(self)
-                        return selected
-                    end
-                }
-            end
-            
-            -- Функция добавления текстового поля
-            function section:AddInput(text, placeholder, callback)
-                local InputFrame = Instance.new("Frame")
-                InputFrame.BackgroundTransparency = 1
-                InputFrame.Size = UDim2.new(1, 0, 0, 50)
-                
-                local InputLabel = Instance.new("TextLabel")
-                InputLabel.Name = "InputLabel"
-                InputLabel.BackgroundTransparency = 1
-                InputLabel.Position = UDim2.new(0, 0, 0, 0)
-                InputLabel.Size = UDim2.new(1, 0, 0, 20)
-                InputLabel.Font = Enum.Font.Gotham
-                InputLabel.Text = text
-                InputLabel.TextColor3 = currentTheme.Text
-                InputLabel.TextSize = 12
-                InputLabel.TextXAlignment = Enum.TextXAlignment.Left
-                InputLabel.Parent = InputFrame
-                
-                local InputBox = Instance.new("TextBox")
-                InputBox.Name = "InputBox"
-                InputBox.BackgroundColor3 = currentTheme.Input
-                InputBox.BorderSizePixel = 0
-                InputBox.Position = UDim2.new(0, 0, 0, 25)
-                InputBox.Size = UDim2.new(1, 0, 0, 25)
-                InputBox.Font = Enum.Font.Gotham
-                InputBox.PlaceholderText = placeholder or ""
-                InputBox.Text = ""
-                InputBox.TextColor3 = currentTheme.Text
-                InputBox.TextSize = 12
-                InputBox.TextXAlignment = Enum.TextXAlignment.Left
-                RoundCorners(InputBox, 4)
-                
-                InputBox.FocusLost:Connect(function(enterPressed)
-                    if enterPressed and callback then
-                        callback(InputBox.Text)
-                    end
-                end)
-                
-                InputBox.Parent = InputFrame
-                InputFrame.Parent = SectionContent
-                
-                return {
-                    Set = function(self, value)
-                        InputBox.Text = value
-                    end,
-                    Get = function(self)
-                        return InputBox.Text
-                    end
-                }
-            end
-            
-            -- Функция добавления метки
-            function section:AddLabel(text)
-                local LabelFrame = Instance.new("Frame")
-                LabelFrame.BackgroundTransparency = 1
-                LabelFrame.Size = UDim2.new(1, 0, 0, 20)
-                
-                local Label = Instance.new("TextLabel")
-                Label.Name = "Label"
-                Label.BackgroundTransparency = 1
-                Label.Size = UDim2.new(1, 0, 1, 0)
-                Label.Font = Enum.Font.Gotham
-                Label.Text = text
-                Label.TextColor3 = currentTheme.Text
-                Label.TextSize = 12
-                Label.TextXAlignment = Enum.TextXAlignment.Left
-                Label.Parent = LabelFrame
-                
-                LabelFrame.Parent = SectionContent
-                
-                return {
-                    SetText = function(self, newText)
-                        Label.Text = newText
-                    end
-                }
-            end
-            
-            -- Функция добавления цветового пикера
-            function section:AddColorpicker(text, defaultColor, callback)
-                local ColorpickerFrame = Instance.new("Frame")
-                ColorpickerFrame.BackgroundTransparency = 1
-                ColorpickerFrame.Size = UDim2.new(1, 0, 0, 50)
-                
-                local ColorpickerLabel = Instance.new("TextLabel")
-                ColorpickerLabel.Name = "ColorpickerLabel"
-                ColorpickerLabel.BackgroundTransparency = 1
-                ColorpickerLabel.Position = UDim2.new(0, 0, 0, 0)
-                ColorpickerLabel.Size = UDim2.new(1, -30, 0, 20)
-                ColorpickerLabel.Font = Enum.Font.Gotham
-                ColorpickerLabel.Text = text
-                ColorpickerLabel.TextColor3 = currentTheme.Text
-                ColorpickerLabel.TextSize = 12
-                ColorpickerLabel.TextXAlignment = Enum.TextXAlignment.Left
-                ColorpickerLabel.Parent = ColorpickerFrame
-                
-                local ColorpickerButton = Instance.new("TextButton")
-                ColorpickerButton.Name = "ColorpickerButton"
-                ColorpickerButton.BackgroundColor3 = defaultColor or Color3.new(1, 1, 1)
-                ColorpickerButton.BorderSizePixel = 0
-                ColorpickerButton.Position = UDim2.new(1, -25, 0, 0)
-                ColorpickerButton.Size = UDim2.new(0, 25, 0, 20)
-                ColorpickerButton.Font = Enum.Font.SourceSans
-                ColorpickerButton.Text = ""
-                ColorpickerButton.AutoButtonColor = false
-                RoundCorners(ColorpickerButton, 4)
-                
-                -- Здесь должна быть реализация выбора цвета
-                -- (упрощенная версия без полноценного цветового пикера)
-                
-                ColorpickerButton.MouseButton1Click:Connect(function()
-                    -- В реальной реализации здесь должно открываться окно выбора цвета
-                    print("Color picker would open here")
-                end)
-                
-                ColorpickerButton.Parent = ColorpickerFrame
-                ColorpickerFrame.Parent = SectionContent
-                
-                return {
-                    SetColor = function(self, color)
-                        ColorpickerButton.BackgroundColor3 = color
-                        if callback then callback(color) end
-                    end,
-                    GetColor = function(self)
-                        return ColorpickerButton.BackgroundColor3
-                    end
-                }
-            end
-            
-            -- Функция добавления бинда клавиш
-            function section:AddKeybind(text, defaultKey, callback)
-                local KeybindFrame = Instance.new("Frame")
-                KeybindFrame.BackgroundTransparency = 1
-                KeybindFrame.Size = UDim2.new(1, 0, 0, 50)
-                
-                local KeybindLabel = Instance.new("TextLabel")
-                KeybindLabel.Name = "KeybindLabel"
-                KeybindLabel.BackgroundTransparency = 1
-                KeybindLabel.Position = UDim2.new(0, 0, 0, 0)
-                KeybindLabel.Size = UDim2.new(1, -80, 0, 20)
-                KeybindLabel.Font = Enum.Font.Gotham
-                KeybindLabel.Text = text
-                KeybindLabel.TextColor3 = currentTheme.Text
-                KeybindLabel.TextSize = 12
-                KeybindLabel.TextXAlignment = Enum.TextXAlignment.Left
-                KeybindLabel.Parent = KeybindFrame
-                
-                local KeybindButton = Instance.new("TextButton")
-                KeybindButton.Name = "KeybindButton"
-                KeybindButton.BackgroundColor3 = currentTheme.Secondary
-                KeybindButton.BorderSizePixel = 0
-                KeybindButton.Position = UDim2.new(1, -75, 0, 0)
-                KeybindButton.Size = UDim2.new(0, 70, 0, 20)
-                KeybindButton.Font = Enum.Font.Gotham
-                KeybindButton.Text = defaultKey and defaultKey.Name or "None"
-                KeybindButton.TextColor3 = currentTheme.Text
-                KeybindButton.TextSize = 12
-                KeybindButton.AutoButtonColor = false
-                RoundCorners(KeybindButton, 4)
-                
-                local listening = false
-                
-                KeybindButton.MouseButton1Click:Connect(function()
-                    listening = true
-                    KeybindButton.Text = "..."
-                    KeybindButton.BackgroundColor3 = currentTheme.Accent
-                end)
-                
-                local function setKey(key)
-                    KeybindButton.Text = key.Name
-                    KeybindButton.BackgroundColor3 = currentTheme.Secondary
-                    listening = false
-                    if callback then callback(key) end
-                end
-                
-                UserInputService.InputBegan:Connect(function(input, processed)
-                    if listening and not processed then
-                        if input.UserInputType == Enum.UserInputType.Keyboard then
-                            setKey(input.KeyCode)
-                        elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
-                            setKey(Enum.KeyCode.MouseButton1)
-                        elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-                            setKey(Enum.KeyCode.MouseButton2)
-                        end
-                    end
-                end)
-                
-                KeybindButton.Parent = KeybindFrame
-                KeybindFrame.Parent = SectionContent
-                
-                return {
-                    SetKey = function(self, key)
-                        KeybindButton.Text = key.Name
-                        if callback then callback(key) end
-                    end,
-                    GetKey = function(self)
-                        return Enum.KeyCode[KeybindButton.Text]
-                    end
-                }
-            end
-            
-            -- Функция добавления разделителя
-            function section:AddDivider()
-                local DividerFrame = Instance.new("Frame")
-                DividerFrame.BackgroundTransparency = 1
-                DividerFrame.Size = UDim2.new(1, 0, 0, 10)
-                
-                local DividerLine = Instance.new("Frame")
-                DividerLine.BackgroundColor3 = currentTheme.Divider
-                DividerLine.BorderSizePixel = 0
-                DividerLine.Position = UDim2.new(0, 0, 0.5, 0)
-                DividerLine.Size = UDim2.new(1, 0, 0, 1)
-                DividerLine.Parent = DividerFrame
-                
-                DividerFrame.Parent = SectionContent
-            end
-            
-            return section
-        end
-        
-        -- Активация первой вкладки
-        if #tabs == 0 then
-            TabButton.BackgroundColor3 = currentTheme.Accent
-            TabContent.Visible = true
-        end
-        
-        TabButton.MouseButton1Click:Connect(function()
-            for _, otherTab in pairs(tabs) do
-                otherTab.TabContent.Visible = false
-                otherTab.TabButton.BackgroundColor3 = currentTheme.Secondary
-            end
-            
-            TabContent.Visible = true
-            TabButton.BackgroundColor3 = currentTheme.Accent
-        end)
-        
-        table.insert(tabs, {
-            TabButton = TabButton,
-            TabContent = TabContent
-        })
-        
-        return tab
-    end
-    
-    function window:Show()
-        ScreenGui.Parent = game:GetService("CoreGui")
-    end
-    
-    function window:Hide()
-        ScreenGui.Parent = nil
-    end
-    
-    function window:Destroy()
-        ScreenGui:Destroy()
-    end
-    
-    function window:SetMinimizeKey(keyCode)
-        MoonLib.WindowMinimizeKey = keyCode
-    end
-    
-    return window
+
+    -- Добавляем верхнюю панель в основное окно
+    TopBar.Parent = MainFrame
+    MainFrame.Parent = ScreenGui
+
+    -- Анимация появления основного окна
+    local appearTween = TweenService:Create(
+        MainFrame,
+        TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {
+            BackgroundTransparency = 0
+        }
+    )
+    appearTween:Play()
+
+    -- Добавляем GUI в CoreGui
+    ScreenGui.Parent = game:GetService("CoreGui")
+
+    return MainFrame
 end
 
-return MoonLib
+-- Инициализация MoonLib
+MoonLib.Notifications = {}
+MoonLib.Configs = {}
+MoonLib.Theme = "Default"
+MoonLib.Transparency = 0.2
+MoonLib.WindowMinimizeKey = Enum.KeyCode.M
+
+-- Пример использования
+MoonLib.CreateWindow("Welcome", "This is your new GUI!")
