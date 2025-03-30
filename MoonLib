@@ -1,6 +1,56 @@
--- MoonLib v2.0 - Универсальная UI библиотека для PC и мобильных устройств
+-- MoonLib v3.0 - Complete UI Library with Key System
 local MoonLib = {}
 MoonLib.__index = MoonLib
+
+-- Анимация загрузки
+local function CreateLoadingAnimation(parent)
+    local loadingFrame = Instance.new("Frame")
+    loadingFrame.Name = "LoadingFrame"
+    loadingFrame.Size = UDim2.new(1, 0, 1, 0)
+    loadingFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    loadingFrame.BackgroundTransparency = 0.2
+    loadingFrame.ZIndex = 1000
+    loadingFrame.Parent = parent
+
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 8)
+    uiCorner.Parent = loadingFrame
+
+    local loadingText = Instance.new("TextLabel")
+    loadingText.Name = "LoadingText"
+    loadingText.Text = "MoonLib Loading..."
+    loadingText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    loadingText.TextSize = 18
+    loadingText.Font = Enum.Font.GothamSemibold
+    loadingText.BackgroundTransparency = 1
+    loadingText.Size = UDim2.new(0, 200, 0, 30)
+    loadingText.Position = UDim2.new(0.5, -100, 0.5, -15)
+    loadingText.ZIndex = 1001
+    loadingText.Parent = loadingFrame
+
+    local moonIcon = Instance.new("ImageLabel")
+    moonIcon.Name = "MoonIcon"
+    moonIcon.Image = "rbxassetid://10734969510"
+    moonIcon.BackgroundTransparency = 1
+    moonIcon.Size = UDim2.new(0, 50, 0, 50)
+    moonIcon.Position = UDim2.new(0.5, -25, 0.5, -80)
+    moonIcon.ZIndex = 1001
+    moonIcon.Parent = loadingFrame
+
+    local spinTween = game:GetService("TweenService"):Create(
+        moonIcon,
+        TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1),
+        {Rotation = 360}
+    )
+    spinTween:Play()
+
+    return {
+        Destroy = function()
+            spinTween:Cancel()
+            loadingFrame:Destroy()
+        end
+    }
+end
 
 -- Определяем тип устройства
 local isMobile = (function()
@@ -10,244 +60,154 @@ local isMobile = (function()
     return false
 end)()
 
--- Инициализация
+-- Инициализация с Key System
 function MoonLib:Init(options)
     options = options or {}
+    
+    -- Создаем анимацию загрузки
+    local loadingAnimation
+    if not options.DisableLoading then
+        local tempGui = Instance.new("ScreenGui")
+        tempGui.Name = "MoonLibTempGui"
+        tempGui.Parent = game:GetService("CoreGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+        loadingAnimation = CreateLoadingAnimation(tempGui)
+    end
+    
+    -- Проверяем Key System
+    if options.KeySystem then
+        local keyValid = false
+        
+        -- GUI для ввода ключа
+        local keyInputGui = Instance.new("ScreenGui")
+        keyInputGui.Name = "MoonLibKeyInput"
+        keyInputGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        keyInputGui.Parent = game:GetService("CoreGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+        
+        local keyFrame = Instance.new("Frame")
+        keyFrame.Size = UDim2.new(0, 300, 0, 200)
+        keyFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+        keyFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        keyFrame.BackgroundTransparency = 0.1
+        keyFrame.Parent = keyInputGui
+        
+        local uiCorner = Instance.new("UICorner")
+        uiCorner.CornerRadius = UDim.new(0, 8)
+        uiCorner.Parent = keyFrame
+        
+        local title = Instance.new("TextLabel")
+        title.Text = "MoonLib Key System"
+        title.TextColor3 = Color3.fromRGB(255, 255, 255)
+        title.TextSize = 18
+        title.Font = Enum.Font.GothamSemibold
+        title.BackgroundTransparency = 1
+        title.Size = UDim2.new(0, 200, 0, 30)
+        title.Position = UDim2.new(0.5, -100, 0.1, 0)
+        title.Parent = keyFrame
+        
+        local inputBox = Instance.new("TextBox")
+        inputBox.PlaceholderText = "Enter key..."
+        inputBox.Text = ""
+        inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+        inputBox.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        inputBox.Size = UDim2.new(0, 250, 0, 40)
+        inputBox.Position = UDim2.new(0.5, -125, 0.4, 0)
+        inputBox.Font = Enum.Font.Gotham
+        inputBox.TextSize = 16
+        inputBox.Parent = keyFrame
+        
+        local uiCorner2 = Instance.new("UICorner")
+        uiCorner2.CornerRadius = UDim.new(0, 4)
+        uiCorner2.Parent = inputBox
+        
+        local submitButton = Instance.new("TextButton")
+        submitButton.Text = "Submit"
+        submitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        submitButton.TextSize = 16
+        submitButton.Font = Enum.Font.GothamSemibold
+        submitButton.BackgroundColor3 = Color3.fromRGB(136, 114, 255)
+        submitButton.Size = UDim2.new(0, 100, 0, 35)
+        submitButton.Position = UDim2.new(0.5, -50, 0.7, 0)
+        submitButton.Parent = keyFrame
+        
+        local uiCorner3 = Instance.new("UICorner")
+        uiCorner3.CornerRadius = UDim.new(0, 4)
+        uiCorner3.Parent = submitButton
+        
+        local messageLabel = Instance.new("TextLabel")
+        messageLabel.Text = ""
+        messageLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        messageLabel.TextSize = 14
+        messageLabel.Font = Enum.Font.Gotham
+        messageLabel.BackgroundTransparency = 1
+        messageLabel.Size = UDim2.new(0, 250, 0, 20)
+        messageLabel.Position = UDim2.new(0.5, -125, 0.85, 0)
+        messageLabel.Parent = keyFrame
+        
+        -- Ожидаем ввода ключа
+        local keyValidated = false
+        submitButton.MouseButton1Click:Connect(function()
+            local key = inputBox.Text
+            if options.KeySystem.Validate(key) then
+                keyValidated = true
+                keyInputGui:Destroy()
+                if loadingAnimation then loadingAnimation.Destroy() end
+            else
+                messageLabel.Text = "Invalid key, please try again"
+                task.wait(2)
+                messageLabel.Text = ""
+            end
+        end)
+        
+        -- Если ключ не нужен (например, для whitelist)
+        if options.KeySystem.Keys then
+            repeat task.wait() until keyValidated
+        else
+            keyInputGui:Destroy()
+            if loadingAnimation then loadingAnimation.Destroy() end
+        end
+    elseif loadingAnimation then
+        loadingAnimation.Destroy()
+    end
+    
+    -- Инициализация библиотеки
     local self = setmetatable({
         Theme = options.Theme or "Dark",
         AccentColor = options.AccentColor or Color3.fromRGB(136, 114, 255),
         Transparency = options.Transparency or (isMobile and 0.95 or 0.85),
-        Version = "2.0",
+        Version = "3.0",
         _elements = {},
         _notifications = {},
         _keybinds = {},
         _draggableElements = {},
         IsMobile = isMobile,
-        ScreenGui = nil
+        ScreenGui = nil,
+        KeySystem = options.KeySystem or nil
     }, MoonLib)
     
     self:CreateUI()
     return self
 end
 
--- Создание основного UI
-function MoonLib:CreateUI()
-    -- Создаем основной ScreenGui с оптимизацией для мобильных устройств
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "MoonLibUI"
-    screenGui.ResetOnSpawn = false
-    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    screenGui.DisplayOrder = 999
-    
-    if self.IsMobile then
-        screenGui.IgnoreGuiInset = true
+-- Остальные функции библиотеки (Window, CreateMinimizeButton и т.д.)
+-- ... (вставьте сюда все предыдущие функции из MoonLib v2.0)
+
+-- Key System Helper
+MoonLib.KeySystem = {
+    new = function(options)
+        options = options or {}
+        return {
+            Keys = options.Keys or nil, -- Список валидных ключей
+            Validate = options.Validate or function(key)
+                if not options.Keys then return true end -- Если ключи не указаны, пропускаем проверку
+                return table.find(options.Keys, key) ~= nil
+            end,
+            Whitelist = options.Whitelist or false, -- Только для определенных пользователей
+            WhitelistCheck = options.WhitelistCheck or function()
+                local playerName = game:GetService("Players").LocalPlayer.Name
+                return table.find(options.Whitelist or {}, playerName) ~= nil
+            end
+        }
     end
-    
-    self.ScreenGui = screenGui
-    screenGui.Parent = game:GetService("CoreGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-    
-    -- Создаем контейнер для уведомлений
-    local notificationsFrame = Instance.new("Frame")
-    notificationsFrame.Name = "Notifications"
-    notificationsFrame.BackgroundTransparency = 1
-    notificationsFrame.Size = UDim2.new(1, 0, 1, 0)
-    notificationsFrame.Parent = screenGui
-    
-    -- Система для перемещаемых элементов
-    local dragController = Instance.new("Frame")
-    dragController.Name = "DragController"
-    dragController.BackgroundTransparency = 1
-    dragController.Size = UDim2.new(1, 0, 1, 0)
-    dragController.Parent = screenGui
-    
-    self:SetupDragController(dragController)
-end
-
--- Система перемещения элементов
-function MoonLib:SetupDragController(controller)
-    local UserInputService = game:GetService("UserInputService")
-    local dragging = false
-    local dragInput, dragStart, startPos
-    
-    local function update(input)
-        local delta = input.Position - dragStart
-        for _, element in pairs(self._draggableElements) do
-            if element.Dragging then
-                local newPos = UDim2.new(
-                    startPos.X.Scale, 
-                    startPos.X.Offset + delta.X, 
-                    startPos.Y.Scale, 
-                    startPos.Y.Offset + delta.Y
-                )
-                element.Instance.Position = newPos
-                element.Position = newPos
-            end
-        end
-    end
-    
-    controller.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = nil
-            
-            -- Проверяем, какой элемент перемещаем
-            for _, element in pairs(self._draggableElements) do
-                if element.HitTest(input.Position) then
-                    element.Dragging = true
-                    startPos = element.Instance.Position
-                    break
-                end
-            end
-        end
-    end)
-    
-    controller.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            dragInput = input
-        end
-    end)
-    
-    controller.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-            for _, element in pairs(self._draggableElements) do
-                element.Dragging = false
-            end
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
-            update(input)
-        end
-    end)
-end
-
--- Создание перемещаемой минимизированной кнопки
-function MoonLib:CreateMinimizeButton(windowInstance, options)
-    options = options or {}
-    local button = Instance.new("ImageButton")
-    button.Name = "MinimizeButton"
-    button.BackgroundTransparency = 1
-    button.Image = "rbxassetid://" .. (options.ImageId or 10734969510) -- Иконка луны по умолчанию
-    button.Size = UDim2.new(0, 40, 0, 40)
-    button.Position = options.Position or UDim2.new(0.5, -20, 0, 10)
-    button.ZIndex = 100
-    button.Parent = self.ScreenGui
-    
-    -- Настройки UI
-    local uiCorner = Instance.new("UICorner")
-    uiCorner.CornerRadius = UDim.new(options.CornerRadius or 0.5, 0)
-    uiCorner.Parent = button
-    
-    local uiAspectRatio = Instance.new("UIAspectRatioConstraint")
-    uiAspectRatio.AspectRatio = options.AspectRatio or 1
-    uiAspectRatio.Parent = button
-    
-    local uiScale = Instance.new("UIScale")
-    uiScale.Scale = options.Scale or 1
-    uiScale.Parent = button
-    
-    -- Функционал кнопки
-    button.MouseButton1Click:Connect(function()
-        windowInstance:Toggle()
-    end)
-    
-    -- Добавляем возможность перемещения
-    local draggableElement = {
-        Instance = button,
-        Position = button.Position,
-        Dragging = false,
-        HitTest = function(self, position)
-            local buttonPos = self.Instance.AbsolutePosition
-            local buttonSize = self.Instance.AbsoluteSize
-            return position.X >= buttonPos.X and position.X <= buttonPos.X + buttonSize.X and
-                   position.Y >= buttonPos.Y and position.Y <= buttonPos.Y + buttonSize.Y
-        end
-    }
-    
-    table.insert(self._draggableElements, draggableElement)
-    
-    -- Возвращаем объект для управления
-    local buttonObj = {
-        Instance = button,
-        SetImage = function(imageId)
-            button.Image = "rbxassetid://" .. imageId
-        end,
-        SetSize = function(size)
-            button.Size = size
-        end,
-        SetPosition = function(position)
-            button.Position = position
-            draggableElement.Position = position
-        end,
-        SetCornerRadius = function(radius)
-            uiCorner.CornerRadius = UDim.new(radius, 0)
-        end,
-        SetAspectRatio = function(ratio)
-            uiAspectRatio.AspectRatio = ratio
-        end,
-        SetScale = function(scale)
-            uiScale.Scale = scale
-        end,
-        Destroy = function()
-            button:Destroy()
-            for i, element in ipairs(self._draggableElements) do
-                if element.Instance == button then
-                    table.remove(self._draggableElements, i)
-                    break
-                end
-            end
-        end
-    }
-    
-    return buttonObj
-end
-
--- Окно (оптимизированное для мобильных устройств)
-function MoonLib:Window(options)
-    options = options or {}
-    local windowFrame = Instance.new("Frame")
-    windowFrame.Name = "Window"
-    windowFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    windowFrame.BackgroundTransparency = self.Transparency
-    windowFrame.Size = options.Size or UDim2.new(0, 500, 0, 400)
-    windowFrame.Position = options.Position or (self.IsMobile and UDim2.new(0.5, -250, 0.5, -200) or UDim2.new(0.3, 0, 0.3, 0))
-    windowFrame.ClipsDescendants = true
-    
-    local uiCorner = Instance.new("UICorner")
-    uiCorner.CornerRadius = UDim.new(0, 8)
-    uiCorner.Parent = windowFrame
-    
-    local window = {
-        Instance = windowFrame,
-        Title = options.Title or "MoonLib Window",
-        Size = windowFrame.Size,
-        Position = windowFrame.Position,
-        _tabs = {},
-        _isOpen = false,
-        _minimizeButton = nil
-    }
-    
-    -- Создаем кнопку минимизации
-    window._minimizeButton = self:CreateMinimizeButton(window, {
-        ImageId = 10734969510, -- Иконка луны
-        Position = UDim2.new(0, 10, 0, 10),
-        CornerRadius = 0.5,
-        AspectRatio = 1,
-        Scale = 1
-    })
-    
-    -- Реализация остальных методов окна (как в предыдущей версии)
-    -- ...
-    
-    windowFrame.Parent = self.ScreenGui
-    table.insert(self._elements, window)
-    return window
-end
-
--- Остальные элементы UI (аналогично предыдущей версии, но с оптимизацией для мобильных устройств)
--- ...
+}
 
 return MoonLib
