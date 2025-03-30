@@ -96,54 +96,6 @@ local function UpdateTransparency(window, transparency)
     end
 end
 
-function MoonLib:ShowNotification(title, text, duration)
-    local currentTheme = Themes[MoonLib.Theme]
-    local notification = Instance.new("Frame")
-    notification.Size = UDim2.new(0, 200, 0, 100)
-    notification.Position = UDim2.new(1, -220, 1, -120)
-    notification.BackgroundColor3 = currentTheme.Secondary
-    notification.BackgroundTransparency = MoonLib.Transparency
-    RoundCorners(notification, 10)
-    notification.Parent = game.CoreGui
-
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -20, 0, 30)
-    titleLabel.Position = UDim2.new(0, 10, 0, 10)
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = title
-    titleLabel.TextColor3 = currentTheme.Text
-    titleLabel.TextScaled = true
-    titleLabel.Font = Enum.Font.SourceSansBold
-    titleLabel.Parent = notification
-
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, -20, 0, 50)
-    textLabel.Position = UDim2.new(0, 10, 0, 40)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = text
-    textLabel.TextColor3 = currentTheme.Text
-    textLabel.TextScaled = true
-    textLabel.Font = Enum.Font.SourceSans
-    textLabel.TextWrapped = true
-    textLabel.Parent = notification
-
-    -- Анимация появления
-    notification.Position = UDim2.new(1, -220, 1, -20)
-    notification.BackgroundTransparency = 1
-    local appearTween = TweenService:Create(notification, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(1, -220, 1, -120), BackgroundTransparency = MoonLib.Transparency})
-    appearTween:Play()
-
-    -- Удаление уведомления после заданной длительности
-    delay(duration or 5, function()
-        -- Анимация исчезновения
-        local disappearTween = TweenService:Create(notification, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(1, -220, 1, -20), BackgroundTransparency = 1})
-        disappearTween:Play()
-        disappearTween.Completed:Connect(function()
-            notification:Destroy()
-        end)
-    end)
-end
-
 -- Основные функции
 function MoonLib.SetTheme(themeName)
     if Themes[themeName] then
@@ -330,43 +282,7 @@ function MoonLib.CreateWindow(title, subtitle)
     ResizeHandle.Size = UDim2.new(0, 15, 0, 15)
     ResizeHandle.ZIndex = 2
     RoundCorners(ResizeHandle, 4)
-
-function MoonLib:ToggleUI()
-    if self.UIVisible then
-        -- Анимация скрытия
-        local hideTween = TweenService:Create(self.MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, 0, -0.5, 0), BackgroundTransparency = 1})
-        hideTween:Play()
-        hideTween.Completed:Connect(function()
-            self.MainFrame.Visible = false
-        end)
-    else
-        self.MainFrame.Visible = true
-        -- Анимация появления
-        local showTween = TweenService:Create(self.MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, 0, 0.5, 0), BackgroundTransparency = MoonLib.Transparency})
-        showTween:Play()
-    end
-    self.UIVisible = not self.UIVisible
-end
-
-function CreateButton(parent, text, callback)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 100, 0, 50)
-    button.BackgroundColor3 = Themes[MoonLib.Theme].Accent
-    button.Text = text
-    button.TextColor3 = Themes[MoonLib.Theme].Text
-    button.Font = Enum.Font.SourceSans
-    button.TextScaled = true
-    button.Parent = parent
-
-    RoundCorners(button, 10)
-
-    button.MouseButton1Click:Connect(function()
-        RippleEffect(button)
-        callback()
-        MoonLib:ShowNotification("Button Clicked", "Вы нажали на кнопку: " .. text, 3)
-    end)
-end
-
+    
     -- Сборка интерфейса
     TopBar.Parent = MainFrame
     Title.Parent = TopBar
