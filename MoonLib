@@ -1,15 +1,14 @@
-local MoonLib = {Version = "4.0"}
+local MoonLib = {Version = "3.1"}
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local HttpService = game:GetService("HttpService")
 
 -- Настройки тем
 local Themes = {
-    Aurora = {
-        Main = Color3.fromRGB(25, 28, 42),
-        Secondary = Color3.fromRGB(35, 40, 60),
-        Text = Color3.fromRGB(230, 235, 255),
+    Nebula = {
+        Main = Color3.fromRGB(28, 32, 48),
+        Secondary = Color3.fromRGB(40, 45, 65),
+        Text = Color3.fromRGB(220, 230, 255),
         Accent = Color3.fromRGB(100, 150, 255),
         Shadow = Color3.fromRGB(15, 20, 30),
         ScrollBar = Color3.fromRGB(80, 130, 220),
@@ -19,40 +18,19 @@ local Themes = {
         Divider = Color3.fromRGB(60, 70, 90),
         Warning = Color3.fromRGB(255, 120, 100),
         Success = Color3.fromRGB(100, 220, 150),
-        Input = Color3.fromRGB(35, 40, 55),
-        Overlay = Color3.fromRGB(20, 25, 35)
-    },
-    Midnight = {
-        Main = Color3.fromRGB(20, 22, 30),
-        Secondary = Color3.fromRGB(30, 33, 45),
-        Text = Color3.fromRGB(220, 225, 240),
-        Accent = Color3.fromRGB(120, 80, 220),
-        Shadow = Color3.fromRGB(10, 12, 20),
-        ScrollBar = Color3.fromRGB(100, 80, 200),
-        Slider = Color3.fromRGB(90, 70, 190),
-        Toggle = Color3.fromRGB(110, 90, 210),
-        Dropdown = Color3.fromRGB(40, 45, 60),
-        Divider = Color3.fromRGB(50, 55, 70),
-        Warning = Color3.fromRGB(220, 100, 100),
-        Success = Color3.fromRGB(90, 200, 120),
-        Input = Color3.fromRGB(30, 35, 50),
-        Overlay = Color3.fromRGB(15, 20, 30)
+        Input = Color3.fromRGB(35, 40, 55)
     }
 }
 
-MoonLib.Theme = "Aurora"
+MoonLib.Theme = "Nebula"
 MoonLib.WindowMinimizeKey = Enum.KeyCode.RightAlt
 MoonLib.Visible = true
-MoonLib.Configs = {}
-MoonLib.CurrentConfig = "Default"
-MoonLib.Transparency = 0
-MoonLib.MaxTransparency = 0.5 -- Максимальная прозрачность
 
 -- Утилиты
-local function RippleEffect(button, color)
+local function RippleEffect(button)
     local ripple = Instance.new("Frame")
     ripple.Name = "Ripple"
-    ripple.BackgroundColor3 = color or Color3.fromRGB(255, 255, 255)
+    ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     ripple.BackgroundTransparency = 0.8
     ripple.ZIndex = 10
     ripple.Parent = button
@@ -79,21 +57,9 @@ end
 
 local function RoundCorners(obj, radius)
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, radius or 6)
+    corner.CornerRadius = UDim.new(0, radius)
     corner.Parent = obj
     return corner
-end
-
-local function UpdateTransparency(window, transparency)
-    for _, element in pairs(window:GetDescendants()) do
-        if element:IsA("Frame") and element.BackgroundTransparency < 1 then
-            element.BackgroundTransparency = element:GetAttribute("BaseTransparency") or 0 + transparency
-        elseif element:IsA("TextLabel") or element:IsA("TextButton") or element:IsA("TextBox") then
-            element.TextTransparency = transparency
-        elseif element:IsA("ImageLabel") or element:IsA("ImageButton") then
-            element.ImageTransparency = transparency
-        end
-    end
 end
 
 -- Основные функции
@@ -104,28 +70,6 @@ function MoonLib.SetTheme(themeName)
     else
         warn("Тема '"..themeName.."' не найдена. Используется тема по умолчанию.")
     end
-end
-
-function MoonLib.SaveConfig(configName)
-    MoonLib.Configs[configName] = {
-        Theme = MoonLib.Theme,
-        Transparency = MoonLib.Transparency,
-        WindowMinimizeKey = MoonLib.WindowMinimizeKey
-        -- Здесь можно добавить другие настройки для сохранения
-    }
-    MoonLib.CurrentConfig = configName
-end
-
-function MoonLib.LoadConfig(configName)
-    if MoonLib.Configs[configName] then
-        local config = MoonLib.Configs[configName]
-        MoonLib.SetTheme(config.Theme)
-        MoonLib.Transparency = config.Transparency
-        MoonLib.WindowMinimizeKey = config.WindowMinimizeKey
-        MoonLib.CurrentConfig = configName
-        return true
-    end
-    return false
 end
 
 function MoonLib.CreateWindow(title, subtitle)
@@ -152,13 +96,11 @@ function MoonLib.CreateWindow(title, subtitle)
     -- Настройка MainFrame
     MainFrame.Name = "MainFrame"
     MainFrame.BackgroundColor3 = currentTheme.Main
-    MainFrame.BackgroundTransparency = MoonLib.Transparency
-    MainFrame:SetAttribute("BaseTransparency", 0)
     MainFrame.BorderSizePixel = 0
     MainFrame.Position = UDim2.new(0.3, 0, 0.2, 0)
     MainFrame.Size = UDim2.new(0, 450, 0, 500)
     MainFrame.ClipsDescendants = true
-    RoundCorners(MainFrame, 12)
+    RoundCorners(MainFrame, 8)
     
     -- Тень
     local shadow = Instance.new("ImageLabel")
@@ -176,17 +118,14 @@ function MoonLib.CreateWindow(title, subtitle)
     -- Верхняя панель
     TopBar.Name = "TopBar"
     TopBar.BackgroundColor3 = currentTheme.Secondary
-    TopBar.BackgroundTransparency = MoonLib.Transparency
-    TopBar:SetAttribute("BaseTransparency", 0)
     TopBar.BorderSizePixel = 0
     TopBar.Size = UDim2.new(1, 0, 0, 60)
-    RoundCorners(TopBar, 12)
+    RoundCorners(TopBar, 8)
     TopBar.ZIndex = 2
     
     -- Заголовок
     Title.Name = "Title"
     Title.BackgroundTransparency = 1
-    Title.TextTransparency = MoonLib.Transparency
     Title.Position = UDim2.new(0, 15, 0, 10)
     Title.Size = UDim2.new(1, -30, 0, 24)
     Title.Font = Enum.Font.GothamSemibold
@@ -198,7 +137,6 @@ function MoonLib.CreateWindow(title, subtitle)
     -- Подзаголовок
     Subtitle.Name = "Subtitle"
     Subtitle.BackgroundTransparency = 1
-    Subtitle.TextTransparency = MoonLib.Transparency
     Subtitle.Position = UDim2.new(0, 15, 0, 34)
     Subtitle.Size = UDim2.new(1, -30, 0, 16)
     Subtitle.Font = Enum.Font.Gotham
@@ -210,15 +148,12 @@ function MoonLib.CreateWindow(title, subtitle)
     -- Кнопка закрытия
     CloseButton.Name = "CloseButton"
     CloseButton.BackgroundColor3 = currentTheme.Secondary
-    CloseButton.BackgroundTransparency = MoonLib.Transparency
-    CloseButton:SetAttribute("BaseTransparency", 0)
     CloseButton.BorderSizePixel = 0
     CloseButton.Position = UDim2.new(1, -70, 0, 10)
     CloseButton.Size = UDim2.new(0, 25, 0, 25)
     CloseButton.Font = Enum.Font.GothamBold
     CloseButton.Text = "×"
     CloseButton.TextColor3 = currentTheme.Text
-    CloseButton.TextTransparency = MoonLib.Transparency
     CloseButton.TextSize = 20
     CloseButton.ZIndex = 2
     RoundCorners(CloseButton, 6)
@@ -226,15 +161,12 @@ function MoonLib.CreateWindow(title, subtitle)
     -- Кнопка сворачивания
     MinimizeButton.Name = "MinimizeButton"
     MinimizeButton.BackgroundColor3 = currentTheme.Secondary
-    MinimizeButton.BackgroundTransparency = MoonLib.Transparency
-    MinimizeButton:SetAttribute("BaseTransparency", 0)
     MinimizeButton.BorderSizePixel = 0
     MinimizeButton.Position = UDim2.new(1, -40, 0, 10)
     MinimizeButton.Size = UDim2.new(0, 25, 0, 25)
     MinimizeButton.Font = Enum.Font.GothamBold
     MinimizeButton.Text = "-"
     MinimizeButton.TextColor3 = currentTheme.Text
-    MinimizeButton.TextTransparency = MoonLib.Transparency
     MinimizeButton.TextSize = 20
     MinimizeButton.ZIndex = 2
     RoundCorners(MinimizeButton, 6)
@@ -242,13 +174,11 @@ function MoonLib.CreateWindow(title, subtitle)
     -- Контейнер вкладок
     TabsContainer.Name = "TabsContainer"
     TabsContainer.BackgroundColor3 = currentTheme.Secondary
-    TabsContainer.BackgroundTransparency = MoonLib.Transparency
-    TabsContainer:SetAttribute("BaseTransparency", 0)
     TabsContainer.BorderSizePixel = 0
     TabsContainer.Position = UDim2.new(0, 10, 0, 65)
     TabsContainer.Size = UDim2.new(1, -20, 0, 30)
     TabsContainer.ZIndex = 2
-    RoundCorners(TabsContainer, 8)
+    RoundCorners(TabsContainer, 6)
     
     UIListLayout.Parent = TabsContainer
     UIListLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -259,15 +189,13 @@ function MoonLib.CreateWindow(title, subtitle)
     ContentContainer.Name = "ContentContainer"
     ContentContainer.Active = true
     ContentContainer.BackgroundColor3 = currentTheme.Main
-    ContentContainer.BackgroundTransparency = MoonLib.Transparency
-    ContentContainer:SetAttribute("BaseTransparency", 0)
     ContentContainer.BorderSizePixel = 0
     ContentContainer.Position = UDim2.new(0, 10, 0, 105)
     ContentContainer.Size = UDim2.new(1, -20, 1, -115)
     ContentContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
     ContentContainer.ScrollBarThickness = 5
     ContentContainer.ScrollBarImageColor3 = currentTheme.ScrollBar
-    ContentContainer.ScrollBarImageTransparency = 0.5 + MoonLib.Transparency/2
+    ContentContainer.ScrollBarImageTransparency = 0.5
     
     ContentLayout.Parent = ContentContainer
     ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -276,7 +204,7 @@ function MoonLib.CreateWindow(title, subtitle)
     -- Ручка изменения размера
     ResizeHandle.Name = "ResizeHandle"
     ResizeHandle.BackgroundColor3 = currentTheme.Accent
-    ResizeHandle.BackgroundTransparency = 0.8 + MoonLib.Transparency/2
+    ResizeHandle.BackgroundTransparency = 0.8
     ResizeHandle.BorderSizePixel = 0
     ResizeHandle.Position = UDim2.new(1, -15, 1, -15)
     ResizeHandle.Size = UDim2.new(0, 15, 0, 15)
@@ -362,9 +290,9 @@ function MoonLib.CreateWindow(title, subtitle)
             local delta = input.Position - resizeStart
             local newSize = UDim2.new(
                 startSize.X.Scale, 
-                math.max(350, startSize.X.Offset + delta.X), 
+                math.max(300, startSize.X.Offset + delta.X), 
                 startSize.Y.Scale, 
-                math.max(250, startSize.Y.Offset + delta.Y)
+                math.max(200, startSize.Y.Offset + delta.Y)
             )
             MainFrame.Size = newSize
         end
@@ -372,19 +300,11 @@ function MoonLib.CreateWindow(title, subtitle)
     
     -- Функционал кнопок
     CloseButton.MouseEnter:Connect(function()
-        TweenService:Create(
-            CloseButton,
-            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {BackgroundColor3 = Color3.fromRGB(255, 60, 60)}
-        ):Play()
+        CloseButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
     end)
     
     CloseButton.MouseLeave:Connect(function()
-        TweenService:Create(
-            CloseButton,
-            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {BackgroundColor3 = currentTheme.Secondary}
-        ):Play()
+        CloseButton.BackgroundColor3 = currentTheme.Secondary
     end)
     
     CloseButton.MouseButton1Click:Connect(function()
@@ -392,19 +312,11 @@ function MoonLib.CreateWindow(title, subtitle)
     end)
     
     MinimizeButton.MouseEnter:Connect(function()
-        TweenService:Create(
-            MinimizeButton,
-            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {BackgroundColor3 = currentTheme.Accent}
-        ):Play()
+        MinimizeButton.BackgroundColor3 = currentTheme.Accent
     end)
     
     MinimizeButton.MouseLeave:Connect(function()
-        TweenService:Create(
-            MinimizeButton,
-            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {BackgroundColor3 = currentTheme.Secondary}
-        ):Play()
+        MinimizeButton.BackgroundColor3 = currentTheme.Secondary
     end)
     
     MinimizeButton.MouseButton1Click:Connect(function()
@@ -412,17 +324,9 @@ function MoonLib.CreateWindow(title, subtitle)
         TabsContainer.Visible = not TabsContainer.Visible
         
         if ContentContainer.Visible then
-            TweenService:Create(
-                MainFrame,
-                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                {Size = UDim2.new(MainFrame.Size.X.Scale, MainFrame.Size.X.Offset, 0, 500)}
-            ):Play()
+            MainFrame.Size = UDim2.new(MainFrame.Size.X.Scale, MainFrame.Size.X.Offset, 0, 500)
         else
-            TweenService:Create(
-                MainFrame,
-                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                {Size = UDim2.new(MainFrame.Size.X.Scale, MainFrame.Size.X.Offset, 0, 60)}
-            ):Play()
+            MainFrame.Size = UDim2.new(MainFrame.Size.X.Scale, MainFrame.Size.X.Offset, 0, 60)
         end
     end)
     
@@ -447,14 +351,11 @@ function MoonLib.CreateWindow(title, subtitle)
         -- Настройка кнопки вкладки
         TabButton.Name = tabName
         TabButton.BackgroundColor3 = currentTheme.Secondary
-        TabButton.BackgroundTransparency = MoonLib.Transparency
-        TabButton:SetAttribute("BaseTransparency", 0)
         TabButton.BorderSizePixel = 0
         TabButton.Size = UDim2.new(0, 100, 0.8, 0)
         TabButton.Font = Enum.Font.GothamSemibold
         TabButton.Text = tabName
         TabButton.TextColor3 = currentTheme.Text
-        TabButton.TextTransparency = MoonLib.Transparency
         TabButton.TextSize = 12
         TabButton.AutoButtonColor = false
         TabButton.ZIndex = 2
@@ -464,14 +365,12 @@ function MoonLib.CreateWindow(title, subtitle)
         TabContent.Name = tabName
         TabContent.Active = true
         TabContent.BackgroundColor3 = currentTheme.Main
-        TabContent.BackgroundTransparency = MoonLib.Transparency
-        TabContent:SetAttribute("BaseTransparency", 0)
         TabContent.BorderSizePixel = 0
         TabContent.Size = UDim2.new(1, 0, 1, 0)
         TabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
         TabContent.ScrollBarThickness = 5
         TabContent.ScrollBarImageColor3 = currentTheme.ScrollBar
-        TabContent.ScrollBarImageTransparency = 0.5 + MoonLib.Transparency/2
+        TabContent.ScrollBarImageTransparency = 0.5
         TabContent.Visible = false
         
         TabContentLayout.Parent = TabContent
@@ -496,7 +395,6 @@ function MoonLib.CreateWindow(title, subtitle)
             local SectionLabel = Instance.new("TextLabel")
             SectionLabel.Name = "SectionLabel"
             SectionLabel.BackgroundTransparency = 1
-            SectionLabel.TextTransparency = MoonLib.Transparency
             SectionLabel.Position = UDim2.new(0, 0, 0, 0)
             SectionLabel.Size = UDim2.new(1, 0, 0, 20)
             SectionLabel.Font = Enum.Font.GothamSemibold
@@ -530,20 +428,17 @@ function MoonLib.CreateWindow(title, subtitle)
                 local Button = Instance.new("TextButton")
                 Button.Name = text
                 Button.BackgroundColor3 = currentTheme.Secondary
-                Button.BackgroundTransparency = MoonLib.Transparency
-                Button:SetAttribute("BaseTransparency", 0)
                 Button.BorderSizePixel = 0
                 Button.Size = UDim2.new(1, 0, 1, 0)
                 Button.Font = Enum.Font.GothamSemibold
                 Button.Text = text
                 Button.TextColor3 = currentTheme.Text
-                Button.TextTransparency = MoonLib.Transparency
                 Button.TextSize = 12
                 Button.AutoButtonColor = false
-                RoundCorners(Button, 6)
+                RoundCorners(Button, 4)
                 
                 Button.MouseButton1Click:Connect(function()
-                    RippleEffect(Button, currentTheme.Accent)
+                    RippleEffect(Button)
                     if callback then callback() end
                 end)
                 
@@ -576,7 +471,7 @@ function MoonLib.CreateWindow(title, subtitle)
                 }
             end
             
-            -- Улучшенная функция добавления переключателя
+            -- Функция добавления переключателя
             function section:AddToggle(text, default, callback)
                 local ToggleFrame = Instance.new("Frame")
                 ToggleFrame.BackgroundTransparency = 1
@@ -585,31 +480,28 @@ function MoonLib.CreateWindow(title, subtitle)
                 local ToggleButton = Instance.new("TextButton")
                 ToggleButton.Name = "ToggleButton"
                 ToggleButton.BackgroundColor3 = currentTheme.Secondary
-                ToggleButton.BackgroundTransparency = MoonLib.Transparency
-                ToggleButton:SetAttribute("BaseTransparency", 0)
                 ToggleButton.BorderSizePixel = 0
-                ToggleButton.Position = UDim2.new(0, 0, 0.5, -12)
-                ToggleButton.Size = UDim2.new(0, 40, 0, 24)
+                ToggleButton.Position = UDim2.new(0, 0, 0.5, -10)
+                ToggleButton.Size = UDim2.new(0, 20, 0, 20)
                 ToggleButton.Font = Enum.Font.SourceSans
                 ToggleButton.Text = ""
                 ToggleButton.AutoButtonColor = false
-                RoundCorners(ToggleButton, 12)
+                RoundCorners(ToggleButton, 4)
                 
                 local ToggleIndicator = Instance.new("Frame")
                 ToggleIndicator.Name = "ToggleIndicator"
                 ToggleIndicator.BackgroundColor3 = currentTheme.Toggle
                 ToggleIndicator.BorderSizePixel = 0
-                ToggleIndicator.Position = UDim2.new(0, 2, 0.5, -10)
-                ToggleIndicator.Size = UDim2.new(0, 20, 0, 20)
+                ToggleIndicator.Position = UDim2.new(0, 2, 0, 2)
+                ToggleIndicator.Size = UDim2.new(1, -4, 1, -4)
                 ToggleIndicator.Visible = default or false
-                RoundCorners(ToggleIndicator, 10)
+                RoundCorners(ToggleIndicator, 2)
                 
                 local ToggleLabel = Instance.new("TextLabel")
                 ToggleLabel.Name = "ToggleLabel"
                 ToggleLabel.BackgroundTransparency = 1
-                ToggleLabel.TextTransparency = MoonLib.Transparency
-                ToggleLabel.Position = UDim2.new(0, 50, 0, 0)
-                ToggleLabel.Size = UDim2.new(1, -50, 1, 0)
+                ToggleLabel.Position = UDim2.new(0, 30, 0, 0)
+                ToggleLabel.Size = UDim2.new(1, -30, 1, 0)
                 ToggleLabel.Font = Enum.Font.Gotham
                 ToggleLabel.Text = text
                 ToggleLabel.TextColor3 = currentTheme.Text
@@ -623,48 +515,16 @@ function MoonLib.CreateWindow(title, subtitle)
                 
                 local toggled = default or false
                 
-                local function updateToggle()
-                    if toggled then
-                        TweenService:Create(
-                            ToggleIndicator,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Position = UDim2.new(1, -22, 0.5, -10)}
-                        ):Play()
-                        TweenService:Create(
-                            ToggleButton,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {BackgroundColor3 = Color3.fromRGB(
-                                currentTheme.Toggle.R * 255 * 0.3 + currentTheme.Secondary.R * 255 * 0.7,
-                                currentTheme.Toggle.G * 255 * 0.3 + currentTheme.Secondary.G * 255 * 0.7,
-                                currentTheme.Toggle.B * 255 * 0.3 + currentTheme.Secondary.B * 255 * 0.7
-                            ) / 255}
-                        ):Play()
-                    else
-                        TweenService:Create(
-                            ToggleIndicator,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Position = UDim2.new(0, 2, 0.5, -10)}
-                        ):Play()
-                        TweenService:Create(
-                            ToggleButton,
-                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {BackgroundColor3 = currentTheme.Secondary}
-                        ):Play()
-                    end
-                end
-                
-                updateToggle()
-                
                 ToggleButton.MouseButton1Click:Connect(function()
                     toggled = not toggled
-                    updateToggle()
+                    ToggleIndicator.Visible = toggled
                     if callback then callback(toggled) end
                 end)
                 
                 return {
                     Set = function(self, state)
                         toggled = state
-                        updateToggle()
+                        ToggleIndicator.Visible = state
                     end,
                     Get = function(self)
                         return toggled
@@ -672,7 +532,7 @@ function MoonLib.CreateWindow(title, subtitle)
                 }
             end
             
-            -- Улучшенная функция добавления слайдера
+            -- Функция добавления слайдера
             function section:AddSlider(text, min, max, default, callback)
                 local SliderFrame = Instance.new("Frame")
                 SliderFrame.BackgroundTransparency = 1
@@ -681,7 +541,6 @@ function MoonLib.CreateWindow(title, subtitle)
                 local SliderLabel = Instance.new("TextLabel")
                 SliderLabel.Name = "SliderLabel"
                 SliderLabel.BackgroundTransparency = 1
-                SliderLabel.TextTransparency = MoonLib.Transparency
                 SliderLabel.Position = UDim2.new(0, 0, 0, 0)
                 SliderLabel.Size = UDim2.new(1, 0, 0, 20)
                 SliderLabel.Font = Enum.Font.Gotham
@@ -694,7 +553,6 @@ function MoonLib.CreateWindow(title, subtitle)
                 local SliderValue = Instance.new("TextLabel")
                 SliderValue.Name = "SliderValue"
                 SliderValue.BackgroundTransparency = 1
-                SliderValue.TextTransparency = MoonLib.Transparency
                 SliderValue.Position = UDim2.new(0.5, 0, 0, 0)
                 SliderValue.Size = UDim2.new(0.5, 0, 0, 20)
                 SliderValue.Font = Enum.Font.Gotham
@@ -707,11 +565,9 @@ function MoonLib.CreateWindow(title, subtitle)
                 local SliderTrack = Instance.new("Frame")
                 SliderTrack.Name = "SliderTrack"
                 SliderTrack.BackgroundColor3 = currentTheme.Secondary
-                SliderTrack.BackgroundTransparency = MoonLib.Transparency
-                SliderTrack:SetAttribute("BaseTransparency", 0)
                 SliderTrack.BorderSizePixel = 0
                 SliderTrack.Position = UDim2.new(0, 0, 0, 25)
-                SliderTrack.Size = UDim2.new(1, 0, 0, 6)
+                SliderTrack.Size = UDim2.new(1, 0, 0, 5)
                 RoundCorners(SliderTrack, 3)
                 
                 local SliderFill = Instance.new("Frame")
@@ -727,24 +583,14 @@ function MoonLib.CreateWindow(title, subtitle)
                 SliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 SliderButton.BackgroundTransparency = 1
                 SliderButton.BorderSizePixel = 0
-                SliderButton.Position = UDim2.new((default - min) / (max - min), -8, 0, -5)
+                SliderButton.Position = UDim2.new((default - min) / (max - min), -8, 0, -4)
                 SliderButton.Size = UDim2.new(0, 16, 0, 16)
                 SliderButton.Font = Enum.Font.SourceSans
                 SliderButton.Text = ""
                 SliderButton.ZIndex = 2
                 RoundCorners(SliderButton, 8)
                 
-                local SliderButtonVisual = Instance.new("Frame")
-                SliderButtonVisual.Name = "SliderButtonVisual"
-                SliderButtonVisual.BackgroundColor3 = currentTheme.Slider
-                SliderButtonVisual.BorderSizePixel = 0
-                SliderButtonVisual.Position = UDim2.new(0.5, -6, 0.5, -6)
-                SliderButtonVisual.Size = UDim2.new(0, 12, 0, 12)
-                SliderButtonVisual.ZIndex = 3
-                RoundCorners(SliderButtonVisual, 6)
-                
                 SliderFill.Parent = SliderTrack
-                SliderButtonVisual.Parent = SliderButton
                 SliderButton.Parent = SliderTrack
                 SliderTrack.Parent = SliderFrame
                 SliderFrame.Parent = SectionContent
@@ -759,7 +605,7 @@ function MoonLib.CreateWindow(title, subtitle)
                     value = math.floor(min + (max - min) * relativeX)
                     SliderValue.Text = tostring(value)
                     SliderFill.Size = UDim2.new(relativeX, 0, 1, 0)
-                    SliderButton.Position = UDim2.new(relativeX, -8, 0, -5)
+                    SliderButton.Position = UDim2.new(relativeX, -8, 0, -4)
                     
                     if callback then callback(value) end
                 end
@@ -777,15 +623,14 @@ function MoonLib.CreateWindow(title, subtitle)
                     end
                 end)
                 
-                SliderTrack.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        sliding = true
+                UserInputService.InputChanged:Connect(function(input)
+                    if sliding and input.UserInputType == Enum.UserInputType.MouseMovement then
                         updateSlider(input)
                     end
                 end)
                 
-                UserInputService.InputChanged:Connect(function(input)
-                    if sliding and input.UserInputType == Enum.UserInputType.MouseMovement then
+                SliderTrack.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         updateSlider(input)
                     end
                 end)
@@ -796,7 +641,7 @@ function MoonLib.CreateWindow(title, subtitle)
                         SliderValue.Text = tostring(value)
                         local relativeX = (value - min) / (max - min)
                         SliderFill.Size = UDim2.new(relativeX, 0, 1, 0)
-                        SliderButton.Position = UDim2.new(relativeX, -8, 0, -5)
+                        SliderButton.Position = UDim2.new(relativeX, -8, 0, -4)
                     end,
                     Get = function(self)
                         return value
@@ -804,7 +649,7 @@ function MoonLib.CreateWindow(title, subtitle)
                 }
             end
             
-            -- Улучшенная функция добавления выпадающего списка
+            -- Функция добавления выпадающего списка
             function section:AddDropdown(text, options, default, callback)
                 local DropdownFrame = Instance.new("Frame")
                 DropdownFrame.BackgroundTransparency = 1
@@ -813,7 +658,6 @@ function MoonLib.CreateWindow(title, subtitle)
                 local DropdownLabel = Instance.new("TextLabel")
                 DropdownLabel.Name = "DropdownLabel"
                 DropdownLabel.BackgroundTransparency = 1
-                DropdownLabel.TextTransparency = MoonLib.Transparency
                 DropdownLabel.Position = UDim2.new(0, 0, 0, 0)
                 DropdownLabel.Size = UDim2.new(1, 0, 0, 20)
                 DropdownLabel.Font = Enum.Font.Gotham
@@ -826,20 +670,17 @@ function MoonLib.CreateWindow(title, subtitle)
                 local DropdownButton = Instance.new("TextButton")
                 DropdownButton.Name = "DropdownButton"
                 DropdownButton.BackgroundColor3 = currentTheme.Dropdown
-                DropdownButton.BackgroundTransparency = MoonLib.Transparency
-                DropdownButton:SetAttribute("BaseTransparency", 0)
                 DropdownButton.BorderSizePixel = 0
                 DropdownButton.Position = UDim2.new(0, 0, 0, 25)
                 DropdownButton.Size = UDim2.new(1, 0, 0, 25)
                 DropdownButton.Font = Enum.Font.SourceSans
                 DropdownButton.Text = ""
                 DropdownButton.AutoButtonColor = false
-                RoundCorners(DropdownButton, 6)
+                RoundCorners(DropdownButton, 4)
                 
                 local DropdownValue = Instance.new("TextLabel")
                 DropdownValue.Name = "DropdownValue"
                 DropdownValue.BackgroundTransparency = 1
-                DropdownValue.TextTransparency = MoonLib.Transparency
                 DropdownValue.Position = UDim2.new(0, 10, 0, 0)
                 DropdownValue.Size = UDim2.new(1, -30, 1, 0)
                 DropdownValue.Font = Enum.Font.Gotham
@@ -852,44 +693,24 @@ function MoonLib.CreateWindow(title, subtitle)
                 local DropdownArrow = Instance.new("ImageLabel")
                 DropdownArrow.Name = "DropdownArrow"
                 DropdownArrow.BackgroundTransparency = 1
-                DropdownArrow.ImageTransparency = MoonLib.Transparency
                 DropdownArrow.Position = UDim2.new(1, -20, 0.5, -5)
                 DropdownArrow.Size = UDim2.new(0, 10, 0, 10)
                 DropdownArrow.Image = "rbxassetid://6031090990"
                 DropdownArrow.ImageColor3 = currentTheme.Text
                 DropdownArrow.Parent = DropdownButton
                 
-                -- Создаем оверлей для выпадающего списка
-                local DropdownOverlay = Instance.new("Frame")
-                DropdownOverlay.Name = "DropdownOverlay"
-                DropdownOverlay.BackgroundColor3 = currentTheme.Overlay
-                DropdownOverlay.BackgroundTransparency = 0.2
-                DropdownOverlay.BorderSizePixel = 0
-                DropdownOverlay.Size = UDim2.new(1, 0, 1, 0)
-                DropdownOverlay.Position = UDim2.new(0, 0, 0, 0)
-                DropdownOverlay.Visible = false
-                DropdownOverlay.ZIndex = 10
-                DropdownOverlay.Parent = ScreenGui
-                
                 local DropdownList = Instance.new("ScrollingFrame")
                 DropdownList.Name = "DropdownList"
                 DropdownList.Active = true
                 DropdownList.BackgroundColor3 = currentTheme.Dropdown
-                DropdownList.BackgroundTransparency = MoonLib.Transparency
-                DropdownList:SetAttribute("BaseTransparency", 0)
                 DropdownList.BorderSizePixel = 0
-                DropdownList.Size = UDim2.new(0, DropdownButton.AbsoluteSize.X, 0, 0)
-                DropdownList.Position = UDim2.new(
-                    0, DropdownButton.AbsolutePosition.X - ScreenGui.AbsolutePosition.X,
-                    0, DropdownButton.AbsolutePosition.Y - ScreenGui.AbsolutePosition.Y + DropdownButton.AbsoluteSize.Y
-                )
+                DropdownList.Position = UDim2.new(0, 0, 0, 55)
+                DropdownList.Size = UDim2.new(1, 0, 0, 0)
                 DropdownList.CanvasSize = UDim2.new(0, 0, 0, 0)
                 DropdownList.ScrollBarThickness = 5
                 DropdownList.ScrollBarImageColor3 = currentTheme.ScrollBar
-                DropdownList.ScrollBarImageTransparency = 0.5 + MoonLib.Transparency/2
                 DropdownList.Visible = false
-                DropdownList.ZIndex = 11
-                RoundCorners(DropdownList, 6)
+                RoundCorners(DropdownList, 4)
                 
                 local DropdownListLayout = Instance.new("UIListLayout")
                 DropdownListLayout.Name = "DropdownListLayout"
@@ -898,7 +719,7 @@ function MoonLib.CreateWindow(title, subtitle)
                 DropdownListLayout.Padding = UDim.new(0, 2)
                 
                 DropdownButton.Parent = DropdownFrame
-                DropdownList.Parent = ScreenGui
+                DropdownList.Parent = DropdownFrame
                 DropdownFrame.Parent = SectionContent
                 
                 local selected = default or options[1]
@@ -908,12 +729,11 @@ function MoonLib.CreateWindow(title, subtitle)
                     isOpen = not isOpen
                     
                     if isOpen then
-                        DropdownOverlay.Visible = true
                         DropdownList.Visible = true
                         TweenService:Create(
                             DropdownList,
                             TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Size = UDim2.new(0, DropdownButton.AbsoluteSize.X, 0, math.min(#options * 30, 150))}
+                            {Size = UDim2.new(1, 0, 0, math.min(#options * 25, 150))}
                         ):Play()
                         TweenService:Create(
                             DropdownArrow,
@@ -924,7 +744,7 @@ function MoonLib.CreateWindow(title, subtitle)
                         TweenService:Create(
                             DropdownList,
                             TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Size = UDim2.new(0, DropdownButton.AbsoluteSize.X, 0, 0)}
+                            {Size = UDim2.new(1, 0, 0, 0)}
                         ):Play()
                         TweenService:Create(
                             DropdownArrow,
@@ -933,15 +753,10 @@ function MoonLib.CreateWindow(title, subtitle)
                         ):Play()
                         wait(0.2)
                         DropdownList.Visible = false
-                        DropdownOverlay.Visible = false
                     end
                 end
                 
                 DropdownButton.MouseButton1Click:Connect(toggleDropdown)
-                
-                DropdownOverlay.MouseButton1Click:Connect(function()
-                    if isOpen then toggleDropdown() end
-                end)
                 
                 -- Создание элементов списка
                 for i, option in ipairs(options) do
@@ -949,34 +764,22 @@ function MoonLib.CreateWindow(title, subtitle)
                     
                     OptionButton.Name = option
                     OptionButton.BackgroundColor3 = currentTheme.Dropdown
-                    OptionButton.BackgroundTransparency = MoonLib.Transparency
-                    OptionButton:SetAttribute("BaseTransparency", 0)
+                    OptionButton.BackgroundTransparency = 1
                     OptionButton.BorderSizePixel = 0
-                    OptionButton.Size = UDim2.new(1, 0, 0, 30)
+                    OptionButton.Size = UDim2.new(1, 0, 0, 25)
                     OptionButton.Font = Enum.Font.Gotham
                     OptionButton.Text = option
                     OptionButton.TextColor3 = currentTheme.Text
-                    OptionButton.TextTransparency = MoonLib.Transparency
                     OptionButton.TextSize = 12
                     OptionButton.TextXAlignment = Enum.TextXAlignment.Left
                     OptionButton.AutoButtonColor = false
-                    OptionButton.ZIndex = 12
-                    RoundCorners(OptionButton, 0)
                     
                     OptionButton.MouseEnter:Connect(function()
-                        TweenService:Create(
-                            OptionButton,
-                            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {BackgroundTransparency = MoonLib.Transparency * 0.5}
-                        ):Play()
+                        OptionButton.BackgroundTransparency = 0.9
                     end)
                     
                     OptionButton.MouseLeave:Connect(function()
-                        TweenService:Create(
-                            OptionButton,
-                            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {BackgroundTransparency = MoonLib.Transparency}
-                        ):Play()
+                        OptionButton.BackgroundTransparency = 1
                     end)
                     
                     OptionButton.MouseButton1Click:Connect(function()
@@ -989,7 +792,7 @@ function MoonLib.CreateWindow(title, subtitle)
                     OptionButton.Parent = DropdownList
                 end
                 
-                DropdownList.CanvasSize = UDim2.new(0, 0, 0, #options * 30)
+                DropdownList.CanvasSize = UDim2.new(0, 0, 0, #options * 25)
                 
                 return {
                     Set = function(self, value)
@@ -1013,7 +816,6 @@ function MoonLib.CreateWindow(title, subtitle)
                 local MultiDropdownLabel = Instance.new("TextLabel")
                 MultiDropdownLabel.Name = "MultiDropdownLabel"
                 MultiDropdownLabel.BackgroundTransparency = 1
-                MultiDropdownLabel.TextTransparency = MoonLib.Transparency
                 MultiDropdownLabel.Position = UDim2.new(0, 0, 0, 0)
                 MultiDropdownLabel.Size = UDim2.new(1, 0, 0, 20)
                 MultiDropdownLabel.Font = Enum.Font.Gotham
@@ -1026,20 +828,17 @@ function MoonLib.CreateWindow(title, subtitle)
                 local MultiDropdownButton = Instance.new("TextButton")
                 MultiDropdownButton.Name = "MultiDropdownButton"
                 MultiDropdownButton.BackgroundColor3 = currentTheme.Dropdown
-                MultiDropdownButton.BackgroundTransparency = MoonLib.Transparency
-                MultiDropdownButton:SetAttribute("BaseTransparency", 0)
                 MultiDropdownButton.BorderSizePixel = 0
                 MultiDropdownButton.Position = UDim2.new(0, 0, 0, 25)
                 MultiDropdownButton.Size = UDim2.new(1, 0, 0, 25)
                 MultiDropdownButton.Font = Enum.Font.SourceSans
                 MultiDropdownButton.Text = ""
                 MultiDropdownButton.AutoButtonColor = false
-                RoundCorners(MultiDropdownButton, 6)
+                RoundCorners(MultiDropdownButton, 4)
                 
                 local MultiDropdownValue = Instance.new("TextLabel")
                 MultiDropdownValue.Name = "MultiDropdownValue"
                 MultiDropdownValue.BackgroundTransparency = 1
-                MultiDropdownValue.TextTransparency = MoonLib.Transparency
                 MultiDropdownValue.Position = UDim2.new(0, 10, 0, 0)
                 MultiDropdownValue.Size = UDim2.new(1, -30, 1, 0)
                 MultiDropdownValue.Font = Enum.Font.Gotham
@@ -1052,44 +851,24 @@ function MoonLib.CreateWindow(title, subtitle)
                 local MultiDropdownArrow = Instance.new("ImageLabel")
                 MultiDropdownArrow.Name = "MultiDropdownArrow"
                 MultiDropdownArrow.BackgroundTransparency = 1
-                MultiDropdownArrow.ImageTransparency = MoonLib.Transparency
                 MultiDropdownArrow.Position = UDim2.new(1, -20, 0.5, -5)
                 MultiDropdownArrow.Size = UDim2.new(0, 10, 0, 10)
                 MultiDropdownArrow.Image = "rbxassetid://6031090990"
                 MultiDropdownArrow.ImageColor3 = currentTheme.Text
                 MultiDropdownArrow.Parent = MultiDropdownButton
                 
-                -- Оверлей для мультивыпадающего списка
-                local MultiDropdownOverlay = Instance.new("Frame")
-                MultiDropdownOverlay.Name = "MultiDropdownOverlay"
-                MultiDropdownOverlay.BackgroundColor3 = currentTheme.Overlay
-                MultiDropdownOverlay.BackgroundTransparency = 0.2
-                MultiDropdownOverlay.BorderSizePixel = 0
-                MultiDropdownOverlay.Size = UDim2.new(1, 0, 1, 0)
-                MultiDropdownOverlay.Position = UDim2.new(0, 0, 0, 0)
-                MultiDropdownOverlay.Visible = false
-                MultiDropdownOverlay.ZIndex = 10
-                MultiDropdownOverlay.Parent = ScreenGui
-                
                 local MultiDropdownList = Instance.new("ScrollingFrame")
                 MultiDropdownList.Name = "MultiDropdownList"
                 MultiDropdownList.Active = true
                 MultiDropdownList.BackgroundColor3 = currentTheme.Dropdown
-                MultiDropdownList.BackgroundTransparency = MoonLib.Transparency
-                MultiDropdownList:SetAttribute("BaseTransparency", 0)
                 MultiDropdownList.BorderSizePixel = 0
-                MultiDropdownList.Size = UDim2.new(0, MultiDropdownButton.AbsoluteSize.X, 0, 0)
-                MultiDropdownList.Position = UDim2.new(
-                    0, MultiDropdownButton.AbsolutePosition.X - ScreenGui.AbsolutePosition.X,
-                    0, MultiDropdownButton.AbsolutePosition.Y - ScreenGui.AbsolutePosition.Y + MultiDropdownButton.AbsoluteSize.Y
-                )
+                MultiDropdownList.Position = UDim2.new(0, 0, 0, 55)
+                MultiDropdownList.Size = UDim2.new(1, 0, 0, 0)
                 MultiDropdownList.CanvasSize = UDim2.new(0, 0, 0, 0)
                 MultiDropdownList.ScrollBarThickness = 5
                 MultiDropdownList.ScrollBarImageColor3 = currentTheme.ScrollBar
-                MultiDropdownList.ScrollBarImageTransparency = 0.5 + MoonLib.Transparency/2
                 MultiDropdownList.Visible = false
-                MultiDropdownList.ZIndex = 11
-                RoundCorners(MultiDropdownList, 6)
+                RoundCorners(MultiDropdownList, 4)
                 
                 local MultiDropdownListLayout = Instance.new("UIListLayout")
                 MultiDropdownListLayout.Name = "MultiDropdownListLayout"
@@ -1098,7 +877,7 @@ function MoonLib.CreateWindow(title, subtitle)
                 MultiDropdownListLayout.Padding = UDim.new(0, 2)
                 
                 MultiDropdownButton.Parent = MultiDropdownFrame
-                MultiDropdownList.Parent = ScreenGui
+                MultiDropdownList.Parent = MultiDropdownFrame
                 MultiDropdownFrame.Parent = SectionContent
                 
                 local selected = default or {options[1]}
@@ -1108,12 +887,11 @@ function MoonLib.CreateWindow(title, subtitle)
                     isOpen = not isOpen
                     
                     if isOpen then
-                        MultiDropdownOverlay.Visible = true
                         MultiDropdownList.Visible = true
                         TweenService:Create(
                             MultiDropdownList,
                             TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Size = UDim2.new(0, MultiDropdownButton.AbsoluteSize.X, 0, math.min(#options * 30, 150))}
+                            {Size = UDim2.new(1, 0, 0, math.min(#options * 25, 150))}
                         ):Play()
                         TweenService:Create(
                             MultiDropdownArrow,
@@ -1124,7 +902,7 @@ function MoonLib.CreateWindow(title, subtitle)
                         TweenService:Create(
                             MultiDropdownList,
                             TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {Size = UDim2.new(0, MultiDropdownButton.AbsoluteSize.X, 0, 0)}
+                            {Size = UDim2.new(1, 0, 0, 0)}
                         ):Play()
                         TweenService:Create(
                             MultiDropdownArrow,
@@ -1133,49 +911,36 @@ function MoonLib.CreateWindow(title, subtitle)
                         ):Play()
                         wait(0.2)
                         MultiDropdownList.Visible = false
-                        MultiDropdownOverlay.Visible = false
                     end
                 end
                 
                 MultiDropdownButton.MouseButton1Click:Connect(toggleDropdown)
                 
-                MultiDropdownOverlay.MouseButton1Click:Connect(function()
-                    if isOpen then toggleDropdown() end
-                end)
-                
                 -- Создание элементов списка
                 for i, option in ipairs(options) do
                     local OptionFrame = Instance.new("Frame")
                     OptionFrame.BackgroundTransparency = 1
-                    OptionFrame.Size = UDim2.new(1, 0, 0, 30)
-                    OptionFrame.ZIndex = 12
+                    OptionFrame.Size = UDim2.new(1, 0, 0, 25)
                     
                     local OptionButton = Instance.new("TextButton")
                     OptionButton.Name = option
                     OptionButton.BackgroundColor3 = currentTheme.Dropdown
-                    OptionButton.BackgroundTransparency = MoonLib.Transparency
-                    OptionButton:SetAttribute("BaseTransparency", 0)
+                    OptionButton.BackgroundTransparency = 1
                     OptionButton.BorderSizePixel = 0
                     OptionButton.Size = UDim2.new(1, -25, 1, 0)
                     OptionButton.Font = Enum.Font.Gotham
                     OptionButton.Text = option
                     OptionButton.TextColor3 = currentTheme.Text
-                    OptionButton.TextTransparency = MoonLib.Transparency
                     OptionButton.TextSize = 12
                     OptionButton.TextXAlignment = Enum.TextXAlignment.Left
                     OptionButton.AutoButtonColor = false
-                    OptionButton.ZIndex = 12
-                    RoundCorners(OptionButton, 0)
                     
                     local OptionToggle = Instance.new("Frame")
                     OptionToggle.Name = "OptionToggle"
                     OptionToggle.BackgroundColor3 = currentTheme.Secondary
-                    OptionToggle.BackgroundTransparency = MoonLib.Transparency
-                    OptionToggle:SetAttribute("BaseTransparency", 0)
                     OptionToggle.BorderSizePixel = 0
                     OptionToggle.Position = UDim2.new(1, -20, 0.5, -8)
                     OptionToggle.Size = UDim2.new(0, 16, 0, 16)
-                    OptionToggle.ZIndex = 12
                     RoundCorners(OptionToggle, 4)
                     
                     local OptionToggleIndicator = Instance.new("Frame")
@@ -1185,7 +950,6 @@ function MoonLib.CreateWindow(title, subtitle)
                     OptionToggleIndicator.Position = UDim2.new(0, 2, 0, 2)
                     OptionToggleIndicator.Size = UDim2.new(1, -4, 1, -4)
                     OptionToggleIndicator.Visible = table.find(selected, option) ~= nil
-                    OptionToggleIndicator.ZIndex = 13
                     RoundCorners(OptionToggleIndicator, 2)
                     
                     OptionToggleIndicator.Parent = OptionToggle
@@ -1194,19 +958,11 @@ function MoonLib.CreateWindow(title, subtitle)
                     OptionFrame.Parent = MultiDropdownList
                     
                     OptionButton.MouseEnter:Connect(function()
-                        TweenService:Create(
-                            OptionButton,
-                            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {BackgroundTransparency = MoonLib.Transparency * 0.5}
-                        ):Play()
+                        OptionButton.BackgroundTransparency = 0.9
                     end)
                     
                     OptionButton.MouseLeave:Connect(function()
-                        TweenService:Create(
-                            OptionButton,
-                            TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                            {BackgroundTransparency = MoonLib.Transparency}
-                        ):Play()
+                        OptionButton.BackgroundTransparency = 1
                     end)
                     
                     OptionButton.MouseButton1Click:Connect(function()
@@ -1222,7 +978,7 @@ function MoonLib.CreateWindow(title, subtitle)
                     end)
                 end
                 
-                MultiDropdownList.CanvasSize = UDim2.new(0, 0, 0, #options * 30)
+                MultiDropdownList.CanvasSize = UDim2.new(0, 0, 0, #options * 25)
                 
                 return {
                     Set = function(self, values)
@@ -1254,7 +1010,6 @@ function MoonLib.CreateWindow(title, subtitle)
                 local InputLabel = Instance.new("TextLabel")
                 InputLabel.Name = "InputLabel"
                 InputLabel.BackgroundTransparency = 1
-                InputLabel.TextTransparency = MoonLib.Transparency
                 InputLabel.Position = UDim2.new(0, 0, 0, 0)
                 InputLabel.Size = UDim2.new(1, 0, 0, 20)
                 InputLabel.Font = Enum.Font.Gotham
@@ -1267,35 +1022,18 @@ function MoonLib.CreateWindow(title, subtitle)
                 local InputBox = Instance.new("TextBox")
                 InputBox.Name = "InputBox"
                 InputBox.BackgroundColor3 = currentTheme.Input
-                InputBox.BackgroundTransparency = MoonLib.Transparency
-                InputBox:SetAttribute("BaseTransparency", 0)
                 InputBox.BorderSizePixel = 0
                 InputBox.Position = UDim2.new(0, 0, 0, 25)
                 InputBox.Size = UDim2.new(1, 0, 0, 25)
                 InputBox.Font = Enum.Font.Gotham
                 InputBox.PlaceholderText = placeholder or ""
-                InputBox.PlaceholderColor3 = Color3.fromRGB(150, 160, 180)
                 InputBox.Text = ""
                 InputBox.TextColor3 = currentTheme.Text
-                InputBox.TextTransparency = MoonLib.Transparency
                 InputBox.TextSize = 12
                 InputBox.TextXAlignment = Enum.TextXAlignment.Left
-                RoundCorners(InputBox, 6)
-                
-                InputBox.Focused:Connect(function()
-                    TweenService:Create(
-                        InputBox,
-                        TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                        {BackgroundTransparency = MoonLib.Transparency * 0.5}
-                    ):Play()
-                end)
+                RoundCorners(InputBox, 4)
                 
                 InputBox.FocusLost:Connect(function(enterPressed)
-                    TweenService:Create(
-                        InputBox,
-                        TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                        {BackgroundTransparency = MoonLib.Transparency}
-                    ):Play()
                     if enterPressed and callback then
                         callback(InputBox.Text)
                     end
@@ -1323,7 +1061,6 @@ function MoonLib.CreateWindow(title, subtitle)
                 local Label = Instance.new("TextLabel")
                 Label.Name = "Label"
                 Label.BackgroundTransparency = 1
-                Label.TextTransparency = MoonLib.Transparency
                 Label.Size = UDim2.new(1, 0, 1, 0)
                 Label.Font = Enum.Font.Gotham
                 Label.Text = text
@@ -1350,7 +1087,6 @@ function MoonLib.CreateWindow(title, subtitle)
                 local ColorpickerLabel = Instance.new("TextLabel")
                 ColorpickerLabel.Name = "ColorpickerLabel"
                 ColorpickerLabel.BackgroundTransparency = 1
-                ColorpickerLabel.TextTransparency = MoonLib.Transparency
                 ColorpickerLabel.Position = UDim2.new(0, 0, 0, 0)
                 ColorpickerLabel.Size = UDim2.new(1, -30, 0, 20)
                 ColorpickerLabel.Font = Enum.Font.Gotham
@@ -1363,15 +1099,13 @@ function MoonLib.CreateWindow(title, subtitle)
                 local ColorpickerButton = Instance.new("TextButton")
                 ColorpickerButton.Name = "ColorpickerButton"
                 ColorpickerButton.BackgroundColor3 = defaultColor or Color3.new(1, 1, 1)
-                ColorpickerButton.BackgroundTransparency = MoonLib.Transparency
-                ColorpickerButton:SetAttribute("BaseTransparency", 0)
                 ColorpickerButton.BorderSizePixel = 0
                 ColorpickerButton.Position = UDim2.new(1, -25, 0, 0)
                 ColorpickerButton.Size = UDim2.new(0, 25, 0, 20)
                 ColorpickerButton.Font = Enum.Font.SourceSans
                 ColorpickerButton.Text = ""
                 ColorpickerButton.AutoButtonColor = false
-                RoundCorners(ColorpickerButton, 6)
+                RoundCorners(ColorpickerButton, 4)
                 
                 -- Здесь должна быть реализация выбора цвета
                 -- (упрощенная версия без полноценного цветового пикера)
@@ -1404,7 +1138,6 @@ function MoonLib.CreateWindow(title, subtitle)
                 local KeybindLabel = Instance.new("TextLabel")
                 KeybindLabel.Name = "KeybindLabel"
                 KeybindLabel.BackgroundTransparency = 1
-                KeybindLabel.TextTransparency = MoonLib.Transparency
                 KeybindLabel.Position = UDim2.new(0, 0, 0, 0)
                 KeybindLabel.Size = UDim2.new(1, -80, 0, 20)
                 KeybindLabel.Font = Enum.Font.Gotham
@@ -1417,38 +1150,27 @@ function MoonLib.CreateWindow(title, subtitle)
                 local KeybindButton = Instance.new("TextButton")
                 KeybindButton.Name = "KeybindButton"
                 KeybindButton.BackgroundColor3 = currentTheme.Secondary
-                KeybindButton.BackgroundTransparency = MoonLib.Transparency
-                KeybindButton:SetAttribute("BaseTransparency", 0)
                 KeybindButton.BorderSizePixel = 0
                 KeybindButton.Position = UDim2.new(1, -75, 0, 0)
                 KeybindButton.Size = UDim2.new(0, 70, 0, 20)
                 KeybindButton.Font = Enum.Font.Gotham
                 KeybindButton.Text = defaultKey and defaultKey.Name or "None"
                 KeybindButton.TextColor3 = currentTheme.Text
-                KeybindButton.TextTransparency = MoonLib.Transparency
                 KeybindButton.TextSize = 12
                 KeybindButton.AutoButtonColor = false
-                RoundCorners(KeybindButton, 6)
+                RoundCorners(KeybindButton, 4)
                 
                 local listening = false
                 
                 KeybindButton.MouseButton1Click:Connect(function()
                     listening = true
                     KeybindButton.Text = "..."
-                    TweenService:Create(
-                        KeybindButton,
-                        TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                        {BackgroundColor3 = currentTheme.Accent}
-                    ):Play()
+                    KeybindButton.BackgroundColor3 = currentTheme.Accent
                 end)
                 
                 local function setKey(key)
                     KeybindButton.Text = key.Name
-                    TweenService:Create(
-                        KeybindButton,
-                        TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                        {BackgroundColor3 = currentTheme.Secondary}
-                    ):Play()
+                    KeybindButton.BackgroundColor3 = currentTheme.Secondary
                     listening = false
                     if callback then callback(key) end
                 end
@@ -1487,8 +1209,6 @@ function MoonLib.CreateWindow(title, subtitle)
                 
                 local DividerLine = Instance.new("Frame")
                 DividerLine.BackgroundColor3 = currentTheme.Divider
-                DividerLine.BackgroundTransparency = MoonLib.Transparency
-                DividerLine:SetAttribute("BaseTransparency", 0)
                 DividerLine.BorderSizePixel = 0
                 DividerLine.Position = UDim2.new(0, 0, 0.5, 0)
                 DividerLine.Size = UDim2.new(1, 0, 0, 1)
@@ -1524,60 +1244,6 @@ function MoonLib.CreateWindow(title, subtitle)
         return tab
     end
     
-    -- Автоматическое создание вкладки Settings с настройками
-    local SettingsTab = window:AddTab("Settings")
-    local InterfaceSection = SettingsTab:AddSection("Interface Settings")
-    
-    -- Выбор темы
-    local themeDropdown = InterfaceSection:AddDropdown("Theme", {"Aurora", "Midnight"}, MoonLib.Theme, function(selected)
-        MoonLib.SetTheme(selected)
-        -- Здесь нужно обновить все элементы интерфейса
-    end)
-    
-    -- Настройка прозрачности
-    local transparencyToggle = InterfaceSection:AddToggle("Enable Transparency", MoonLib.Transparency > 0, function(state)
-        -- Можно добавить дополнительную логику
-    end)
-    
-    local transparencySlider = InterfaceSection:AddSlider("Transparency", 0, MoonLib.MaxTransparency * 100, MoonLib.Transparency * 100, function(value)
-        MoonLib.Transparency = value / 100
-        UpdateTransparency(ScreenGui, MoonLib.Transparency)
-    end)
-    
-    -- Настройка горячей клавиши
-    local keybindInput = InterfaceSection:AddKeybind("Minimize Keybind", MoonLib.WindowMinimizeKey, function(key)
-        MoonLib.WindowMinimizeKey = key
-    end)
-    
-    -- Управление конфигурациями
-    local ConfigSection = SettingsTab:AddSection("Configurations")
-    
-    local configNameInput = ConfigSection:AddInput("Config Name", "Enter config name")
-    
-    local saveConfigButton = ConfigSection:AddButton("Save Config", function()
-        local configName = configNameInput:Get()
-        if configName and configName ~= "" then
-            MoonLib.SaveConfig(configName)
-            configDropdown:SetValues(table.keys(MoonLib.Configs))
-        end
-    end)
-    
-    local configDropdown = ConfigSection:AddDropdown("Select Config", table.keys(MoonLib.Configs), MoonLib.CurrentConfig, function(selected)
-        -- Можно добавить предпросмотр конфига
-    end)
-    
-    local loadConfigButton = ConfigSection:AddButton("Load Config", function()
-        local selectedConfig = configDropdown:Get()
-        if selectedConfig then
-            MoonLib.LoadConfig(selectedConfig)
-            -- Обновить все элементы интерфейса в соответствии с новой конфигурацией
-            themeDropdown:Set(MoonLib.Theme)
-            transparencyToggle:Set(MoonLib.Transparency > 0)
-            transparencySlider:Set(MoonLib.Transparency * 100)
-            keybindInput:SetKey(MoonLib.WindowMinimizeKey)
-        end
-    end)
-    
     function window:Show()
         ScreenGui.Parent = game:GetService("CoreGui")
     end
@@ -1595,15 +1261,6 @@ function MoonLib.CreateWindow(title, subtitle)
     end
     
     return window
-end
-
--- Вспомогательная функция для получения ключей таблицы
-function table.keys(tbl)
-    local keys = {}
-    for k in pairs(tbl) do
-        table.insert(keys, k)
-    end
-    return keys
 end
 
 return MoonLib
