@@ -1,7 +1,3 @@
--- MoonLib UI Library
--- Версия 1.0
--- Вдохновлено Orion UI, Fluent UI, Luna UI
-
 local MoonLib = {}
 MoonLib.__index = MoonLib
 
