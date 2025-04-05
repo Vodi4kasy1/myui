@@ -1,18 +1,30 @@
+-- MoonLib V2 UI Library
+-- Версия 2.0
+-- Вдохновлено VisionLibV2, Orion UI, Fluent UI
+
+if game:GetService("CoreGui"):FindFirstChild("MoonLib") then
+    game:GetService("CoreGui"):FindFirstChild("MoonLib"):Destroy()
+end
+
 local MoonLib = {}
 MoonLib.__index = MoonLib
 
 -- Конфигурация
 local config = {
     theme = "dark",
-    accentColor = Color3.fromRGB(0, 120, 215),
+    accentColor = Color3.fromRGB(0, 170, 255),
     font = Enum.Font.Gotham,
-    animationSpeed = 0.2
+    animationSpeed = 0.25,
+    blurBackground = false
 }
 
 -- Локальные переменные
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
 
 -- Утилиты
 local function Create(class, props)
@@ -44,23 +56,35 @@ end
 -- Основные функции
 function MoonLib:CreateWindow(options)
     options = options or {}
-    local title = options.Title or "MoonLib UI"
+    local title = options.Title or "MoonLib V2"
     local size = options.Size or Vector2.new(500, 350)
     local autoHide = options.AutoHide or false
+    local position = options.Position or UDim2.new(0.5, -size.X/2, 0.5, -size.Y/2)
     
     -- Основной экран
     local screenGui = Create("ScreenGui", {
-        Name = "MoonLibUI",
+        Name = "MoonLib",
+        Parent = game:GetService("CoreGui"),
         ResetOnSpawn = false,
         ZIndexBehavior = Enum.ZIndexBehavior.Global
     })
+    
+    -- Размытие фона (если включено)
+    local blurEffect
+    if config.blurBackground then
+        blurEffect = Create("BlurEffect", {
+            Name = "Blur",
+            Size = 10,
+            Parent = screenGui
+        })
+    end
     
     -- Главный фрейм
     local mainFrame = Create("Frame", {
         Name = "MainFrame",
         Size = UDim2.new(0, size.X, 0, size.Y),
-        Position = UDim2.new(0.5, -size.X/2, 0.5, -size.Y/2),
-        BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(30, 30, 30) or Color3.fromRGB(240, 240, 240),
+        Position = position,
+        BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(25, 25, 25) or Color3.fromRGB(240, 240, 240),
         AnchorPoint = Vector2.new(0.5, 0.5),
         ClipsDescendants = true,
         Parent = screenGui
@@ -90,8 +114,8 @@ function MoonLib:CreateWindow(options)
     -- Заголовок
     local titleBar = Create("Frame", {
         Name = "TitleBar",
-        Size = UDim2.new(1, 0, 0, 40),
-        BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(220, 220, 220),
+        Size = UDim2.new(1, 0, 0, 36),
+        BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(35, 35, 35) or Color3.fromRGB(220, 220, 220),
         BorderSizePixel = 0,
         Parent = mainFrame
     })
@@ -105,46 +129,44 @@ function MoonLib:CreateWindow(options)
         Name = "Title",
         Text = title,
         Font = config.font,
-        TextSize = 18,
+        TextSize = 16,
         TextColor3 = config.theme == "dark" and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(0, 0, 0),
         TextXAlignment = Enum.TextXAlignment.Left,
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 15, 0, 0),
+        Position = UDim2.new(0, 12, 0, 0),
         Size = UDim2.new(0.5, 0, 1, 0),
         Parent = titleBar
     })
     
     -- Кнопка закрытия
-    local closeButton = Create("TextButton", {
+    local closeButton = Create("ImageButton", {
         Name = "CloseButton",
-        Text = "×",
-        Font = Enum.Font.GothamBold,
-        TextSize = 20,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundColor3 = Color3.fromRGB(215, 60, 60),
-        Position = UDim2.new(1, -40, 0, 5),
-        Size = UDim2.new(0, 30, 0, 30),
+        Image = "rbxassetid://3926305904",
+        ImageRectOffset = Vector2.new(284, 4),
+        ImageRectSize = Vector2.new(24, 24),
+        ImageColor3 = Color3.fromRGB(200, 200, 200),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(1, -32, 0.5, -12),
+        Size = UDim2.new(0, 24, 0, 24),
         Parent = titleBar
-    })
-    
-    Create("UICorner", {
-        CornerRadius = UDim.new(0, 4),
-        Parent = closeButton
     })
     
     -- Эффекты при наведении
     closeButton.MouseEnter:Connect(function()
-        Tween(closeButton, {BackgroundColor3 = Color3.fromRGB(235, 80, 80)}, 0.1)
+        Tween(closeButton, {ImageColor3 = Color3.fromRGB(255, 255, 255)}, 0.1)
     end)
     
     closeButton.MouseLeave:Connect(function()
-        Tween(closeButton, {BackgroundColor3 = Color3.fromRGB(215, 60, 60)}, 0.1)
+        Tween(closeButton, {ImageColor3 = Color3.fromRGB(200, 200, 200)}, 0.1)
     end)
     
     closeButton.MouseButton1Click:Connect(function()
         Tween(mainFrame, {Size = UDim2.new(0, size.X, 0, 0)}, 0.2):Wait()
         Tween(mainFrame, {Size = UDim2.new(0, 0, 0, 0)}, 0.2):Wait()
         screenGui:Destroy()
+        if blurEffect then
+            blurEffect:Destroy()
+        end
     end)
     
     -- Drag функционал
@@ -187,43 +209,34 @@ function MoonLib:CreateWindow(options)
     -- Авто-скрытие
     if autoHide then
         local minimized = false
-        local minimizeButton = Create("TextButton", {
+        local minimizeButton = Create("ImageButton", {
             Name = "MinimizeButton",
-            Text = "-",
-            Font = Enum.Font.GothamBold,
-            TextSize = 20,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            BackgroundColor3 = config.accentColor,
-            Position = UDim2.new(1, -80, 0, 5),
-            Size = UDim2.new(0, 30, 0, 30),
+            Image = "rbxassetid://3926305904",
+            ImageRectOffset = Vector2.new(364, 284),
+            ImageRectSize = Vector2.new(24, 24),
+            ImageColor3 = Color3.fromRGB(200, 200, 200),
+            BackgroundTransparency = 1,
+            Position = UDim2.new(1, -64, 0.5, -12),
+            Size = UDim2.new(0, 24, 0, 24),
             Parent = titleBar
         })
         
-        Create("UICorner", {
-            CornerRadius = UDim.new(0, 4),
-            Parent = minimizeButton
-        })
-        
         minimizeButton.MouseEnter:Connect(function()
-            Tween(minimizeButton, {BackgroundColor3 = Color3.fromRGB(
-                math.floor(config.accentColor.R * 255 + 20),
-                math.floor(config.accentColor.G * 255 + 20),
-                math.floor(config.accentColor.B * 255 + 20)
-            )}, 0.1)
+            Tween(minimizeButton, {ImageColor3 = Color3.fromRGB(255, 255, 255)}, 0.1)
         end)
         
         minimizeButton.MouseLeave:Connect(function()
-            Tween(minimizeButton, {BackgroundColor3 = config.accentColor}, 0.1)
+            Tween(minimizeButton, {ImageColor3 = Color3.fromRGB(200, 200, 200)}, 0.1)
         end)
         
         minimizeButton.MouseButton1Click:Connect(function()
             minimized = not minimized
             if minimized then
-                Tween(mainFrame, {Size = UDim2.new(mainFrame.Size.X.Scale, mainFrame.Size.X.Offset, 0, 40)}, 0.2)
-                minimizeButton.Text = "+"
+                minimizeButton.ImageRectOffset = Vector2.new(404, 284)
+                Tween(mainFrame, {Size = UDim2.new(mainFrame.Size.X.Scale, mainFrame.Size.X.Offset, 0, 36)}, 0.2)
             else
+                minimizeButton.ImageRectOffset = Vector2.new(364, 284)
                 Tween(mainFrame, {Size = UDim2.new(0, size.X, 0, size.Y)}, 0.2)
-                minimizeButton.Text = "-"
             end
         end)
     end
@@ -231,8 +244,8 @@ function MoonLib:CreateWindow(options)
     -- Контейнер для вкладок
     local tabContainer = Create("Frame", {
         Name = "TabContainer",
-        Size = UDim2.new(1, 0, 1, -40),
-        Position = UDim2.new(0, 0, 0, 40),
+        Size = UDim2.new(1, 0, 1, -36),
+        Position = UDim2.new(0, 0, 0, 36),
         BackgroundTransparency = 1,
         Parent = mainFrame
     })
@@ -240,7 +253,7 @@ function MoonLib:CreateWindow(options)
     -- Контейнер для кнопок вкладок
     local tabButtons = Create("Frame", {
         Name = "TabButtons",
-        Size = UDim2.new(1, 0, 0, 40),
+        Size = UDim2.new(1, 0, 0, 36),
         BackgroundTransparency = 1,
         Parent = mainFrame
     })
@@ -249,6 +262,20 @@ function MoonLib:CreateWindow(options)
         FillDirection = Enum.FillDirection.Horizontal,
         SortOrder = Enum.SortOrder.LayoutOrder,
         Parent = tabButtons
+    })
+    
+    -- Индикатор активной вкладки
+    local tabIndicator = Create("Frame", {
+        Name = "TabIndicator",
+        Size = UDim2.new(0, 0, 0, 3),
+        Position = UDim2.new(0, 0, 1, -3),
+        BackgroundColor3 = config.accentColor,
+        Parent = tabButtons
+    })
+    
+    Create("UICorner", {
+        CornerRadius = UDim.new(0, 2),
+        Parent = tabIndicator
     })
     
     -- Анимация при появлении
@@ -263,7 +290,7 @@ function MoonLib:CreateWindow(options)
     function window:Notification(options)
         options = options or {}
         local title = options.Title or "Notification"
-        local text = options.Text or "Hello from MoonLib!"
+        local text = options.Text or "Hello from MoonLib V2!"
         local duration = options.Duration or 5
         local callback = options.Callback
         
@@ -271,8 +298,9 @@ function MoonLib:CreateWindow(options)
             Name = "Notification",
             Size = UDim2.new(0, 300, 0, 100),
             Position = UDim2.new(1, -320, 1, -120),
-            BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(220, 220, 220),
-            Parent = screenGui
+            BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(35, 35, 35) or Color3.fromRGB(220, 220, 220),
+            Parent = screenGui,
+            ZIndex = 100
         })
         
         Create("UICorner", {
@@ -282,7 +310,7 @@ function MoonLib:CreateWindow(options)
         
         Create("UIStroke", {
             Color = config.accentColor,
-            Thickness = 2,
+            Thickness = 1,
             Parent = notification
         })
         
@@ -311,20 +339,15 @@ function MoonLib:CreateWindow(options)
             Parent = notification
         })
         
-        local closeButton = Create("TextButton", {
-            Text = "×",
-            Font = Enum.Font.GothamBold,
-            TextSize = 18,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            BackgroundColor3 = Color3.fromRGB(215, 60, 60),
-            Position = UDim2.new(1, -25, 0, 5),
+        local closeButton = Create("ImageButton", {
+            Image = "rbxassetid://3926305904",
+            ImageRectOffset = Vector2.new(284, 4),
+            ImageRectSize = Vector2.new(24, 24),
+            ImageColor3 = Color3.fromRGB(200, 200, 200),
+            BackgroundTransparency = 1,
+            Position = UDim2.new(1, -30, 0, 5),
             Size = UDim2.new(0, 20, 0, 20),
             Parent = notification
-        })
-        
-        Create("UICorner", {
-            CornerRadius = UDim.new(0, 4),
-            Parent = closeButton
         })
         
         closeButton.MouseButton1Click:Connect(function()
@@ -357,8 +380,8 @@ function MoonLib:CreateWindow(options)
             Text = name,
             Font = config.font,
             TextSize = 14,
-            TextColor3 = config.theme == "dark" and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(50, 50, 50),
-            BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(220, 220, 220),
+            TextColor3 = config.theme == "dark" and Color3.fromRGB(180, 180, 180) or Color3.fromRGB(80, 80, 80),
+            BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(35, 35, 35) or Color3.fromRGB(220, 220, 220),
             BackgroundTransparency = 1,
             Size = UDim2.new(0, 80, 1, 0),
             Parent = tabButtons
@@ -377,14 +400,14 @@ function MoonLib:CreateWindow(options)
         
         Create("UIListLayout", {
             SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 5),
+            Padding = UDim.new(0, 8),
             Parent = tabFrame
         })
         
         Create("UIPadding", {
             PaddingTop = UDim.new(0, 10),
-            PaddingLeft = UDim.new(0, 15),
-            PaddingRight = UDim.new(0, 15),
+            PaddingLeft = UDim.new(0, 12),
+            PaddingRight = UDim.new(0, 12),
             Parent = tabFrame
         })
         
@@ -399,16 +422,23 @@ function MoonLib:CreateWindow(options)
             
             for _, child in ipairs(tabButtons:GetChildren()) do
                 if child:IsA("TextButton") then
-                    Tween(child, {TextColor3 = config.theme == "dark" and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(50, 50, 50)}, 0.1)
+                    Tween(child, {TextColor3 = config.theme == "dark" and Color3.fromRGB(180, 180, 180) or Color3.fromRGB(80, 80, 80)}, 0.1)
                 end
             end
             Tween(tabButton, {TextColor3 = config.accentColor}, 0.1)
+            
+            -- Анимация индикатора
+            Tween(tabIndicator, {
+                Position = UDim2.new(tabButton.Position.X.Scale, tabButton.Position.X.Offset, 1, -3),
+                Size = UDim2.new(0, tabButton.AbsoluteSize.X, 0, 3)
+            }, 0.2)
         end)
         
         -- Активируем первую вкладку
-        if #tabButtons:GetChildren() == 2 then -- 1 кнопка + UIListLayout
+        if #tabButtons:GetChildren() == 3 then -- 1 кнопка + UIListLayout + индикатор
             tabButton.TextColor3 = config.accentColor
             tabFrame.Visible = true
+            tabIndicator.Size = UDim2.new(0, tabButton.AbsoluteSize.X, 0, 3)
         end
         
         -- Возвращаемые методы для вкладки
@@ -417,7 +447,7 @@ function MoonLib:CreateWindow(options)
         function tab:CreateSection(options)
             options = options or {}
             local name = options.Name or "Section"
-            local size = options.Size or UDim2.new(1, -30, 0, 150)
+            local size = options.Size or UDim2.new(1, -24, 0, 150)
             
             local section = Create("Frame", {
                 Name = name .. "Section",
@@ -442,7 +472,7 @@ function MoonLib:CreateWindow(options)
                 Name = "Content",
                 Size = UDim2.new(1, 0, 1, -25),
                 Position = UDim2.new(0, 0, 0, 25),
-                BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(230, 230, 230),
+                BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(35, 35, 35) or Color3.fromRGB(230, 230, 230),
                 Parent = section
             })
             
@@ -452,19 +482,19 @@ function MoonLib:CreateWindow(options)
             })
             
             Create("UIStroke", {
-                Color = config.theme == "dark" and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(180, 180, 180),
+                Color = config.theme == "dark" and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(180, 180, 180),
                 Thickness = 1,
                 Parent = sectionFrame
             })
             
             local contentLayout = Create("UIListLayout", {
                 SortOrder = Enum.SortOrder.LayoutOrder,
-                Padding = UDim.new(0, 5),
+                Padding = UDim.new(0, 8),
                 Parent = sectionFrame
             })
             
             Create("UIPadding", {
-                PaddingTop = UDim.new(0, 5),
+                PaddingTop = UDim.new(0, 8),
                 PaddingLeft = UDim.new(0, 10),
                 PaddingRight = UDim.new(0, 10),
                 Parent = sectionFrame
@@ -485,7 +515,7 @@ function MoonLib:CreateWindow(options)
                     TextSize = 14,
                     TextColor3 = config.theme == "dark" and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(0, 0, 0),
                     BackgroundColor3 = config.accentColor,
-                    Size = UDim2.new(1, 0, 0, 30),
+                    Size = UDim2.new(1, 0, 0, 32),
                     Parent = sectionFrame
                 })
                 
@@ -538,7 +568,7 @@ function MoonLib:CreateWindow(options)
                     Text = "",
                     Size = UDim2.new(0, 50, 0, 25),
                     Position = UDim2.new(1, -55, 0.5, -12.5),
-                    BackgroundColor3 = default and config.accentColor or (config.theme == "dark" and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(180, 180, 180)),
+                    BackgroundColor3 = default and config.accentColor or (config.theme == "dark" and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(180, 180, 180)),
                     Parent = toggle
                 })
                 
@@ -580,7 +610,7 @@ function MoonLib:CreateWindow(options)
                         Tween(toggleButton, {BackgroundColor3 = config.accentColor}, 0.2)
                         Tween(toggleIndicator, {Position = UDim2.new(1, -23, 0.5, -10.5)}, 0.2)
                     else
-                        Tween(toggleButton, {BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(180, 180, 180))}, 0.2)
+                        Tween(toggleButton, {BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(180, 180, 180))}, 0.2)
                         Tween(toggleIndicator, {Position = UDim2.new(0, 2, 0.5, -10.5)}, 0.2)
                     end
                     callback(state)
@@ -611,6 +641,7 @@ function MoonLib:CreateWindow(options)
                 local default = options.Default or min
                 local callback = options.Callback or function() end
                 local precise = options.Precise or false
+                local suffix = options.Suffix or ""
                 
                 local slider = Create("Frame", {
                     Name = name .. "Slider",
@@ -633,7 +664,7 @@ function MoonLib:CreateWindow(options)
                 
                 local sliderValue = Create("TextLabel", {
                     Name = "Value",
-                    Text = tostring(default),
+                    Text = tostring(default) .. suffix,
                     Font = config.font,
                     TextSize = 14,
                     TextColor3 = config.accentColor,
@@ -647,7 +678,7 @@ function MoonLib:CreateWindow(options)
                     Name = "Track",
                     Size = UDim2.new(1, 0, 0, 5),
                     Position = UDim2.new(0, 0, 1, -15),
-                    BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(180, 180, 180)),
+                    BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(180, 180, 180)),
                     Parent = slider
                 })
                 
@@ -693,7 +724,7 @@ function MoonLib:CreateWindow(options)
                 local function UpdateSlider(value)
                     value = math.clamp(value, min, max)
                     currentValue = precise and value or math.floor(value)
-                    sliderValue.Text = tostring(currentValue)
+                    sliderValue.Text = tostring(currentValue) .. suffix
                     local ratio = (currentValue - min) / (max - min)
                     Tween(sliderFill, {Size = UDim2.new(ratio, 0, 1, 0)}, 0.1)
                     Tween(sliderThumb, {Position = UDim2.new(ratio, -7.5, 0.5, -7.5)}, 0.1)
@@ -755,7 +786,7 @@ function MoonLib:CreateWindow(options)
                     TextColor3 = config.theme == "dark" and Color3.fromRGB(220, 220, 220) or Color3.fromRGB(50, 50, 50),
                     TextXAlignment = Enum.TextXAlignment.Left,
                     BackgroundTransparency = 1,
-                    Size = UDim2.new(1, -60, 1, 0),
+                    Size = UDim2.new(1, -130, 1, 0),
                     Parent = dropdown
                 })
                 
@@ -780,7 +811,7 @@ function MoonLib:CreateWindow(options)
                     Name = "DropdownFrame",
                     Size = UDim2.new(1, 0, 0, 0),
                     Position = UDim2.new(0, 0, 1, 5),
-                    BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(200, 200, 200)),
+                    BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(210, 210, 210)),
                     ScrollBarThickness = 4,
                     ScrollBarImageColor3 = config.accentColor,
                     Visible = false,
@@ -830,7 +861,7 @@ function MoonLib:CreateWindow(options)
                         Font = config.font,
                         TextSize = 14,
                         TextColor3 = config.theme == "dark" and Color3.fromRGB(220, 220, 220) or Color3.fromRGB(50, 50, 50),
-                        BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(200, 200, 200)),
+                        BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(210, 210, 210)),
                         Size = UDim2.new(1, -10, 0, 30),
                         Position = UDim2.new(0, 5, 0, 0),
                         Parent = dropdownFrame
@@ -862,7 +893,8 @@ function MoonLib:CreateWindow(options)
             function sectionObj:CreateLabel(options)
                 options = options or {}
                 local text = options.Text or "Label"
-                local color = options.Color or (config.theme == "dark" and Color3.fromRGB(220, 220, 220) or Color3.fromRGB(50, 50, 50))
+                local color = options.Color or (config.theme == "dark" and Color3.fromRGB(220, 220, 220) or Color3.fromRGB(50, 50, 50)
+                local align = options.Align or Enum.TextXAlignment.Left
                 
                 local label = Create("TextLabel", {
                     Name = "Label",
@@ -870,7 +902,7 @@ function MoonLib:CreateWindow(options)
                     Font = config.font,
                     TextSize = 14,
                     TextColor3 = color,
-                    TextXAlignment = Enum.TextXAlignment.Left,
+                    TextXAlignment = align,
                     BackgroundTransparency = 1,
                     Size = UDim2.new(1, 0, 0, 20),
                     Parent = sectionFrame
@@ -885,6 +917,7 @@ function MoonLib:CreateWindow(options)
                 local default = options.Default or ""
                 local placeholder = options.Placeholder or "Type here..."
                 local callback = options.Callback or function() end
+                local clearOnFocus = options.ClearOnFocus or false
                 
                 local textBoxFrame = Create("Frame", {
                     Name = name .. "TextBox",
@@ -923,6 +956,12 @@ function MoonLib:CreateWindow(options)
                     Parent = textBox
                 })
                 
+                textBox.Focused:Connect(function()
+                    if clearOnFocus then
+                        textBox.Text = ""
+                    end
+                end)
+                
                 textBox.FocusLost:Connect(function()
                     callback(textBox.Text)
                 end)
@@ -938,6 +977,89 @@ function MoonLib:CreateWindow(options)
                 return sectionObj
             end
             
+            function sectionObj:CreateKeybind(options)
+                options = options or {}
+                local name = options.Name or "Keybind"
+                local default = options.Default or Enum.KeyCode.Unknown
+                local callback = options.Callback or function() end
+                local allowMouse = options.AllowMouse or false
+                
+                local keybindFrame = Create("Frame", {
+                    Name = name .. "Keybind",
+                    Size = UDim2.new(1, 0, 0, 30),
+                    BackgroundTransparency = 1,
+                    Parent = sectionFrame
+                })
+                
+                local keybindLabel = Create("TextLabel", {
+                    Name = "Label",
+                    Text = name,
+                    Font = config.font,
+                    TextSize = 14,
+                    TextColor3 = config.theme == "dark" and Color3.fromRGB(220, 220, 220) or Color3.fromRGB(50, 50, 50),
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, -130, 1, 0),
+                    Parent = keybindFrame
+                })
+                
+                local keybindButton = Create("TextButton", {
+                    Name = "KeybindButton",
+                    Text = tostring(default):gsub("Enum.KeyCode.", ""),
+                    Font = config.font,
+                    TextSize = 14,
+                    TextColor3 = config.theme == "dark" and Color3.fromRGB(220, 220, 220) or Color3.fromRGB(50, 50, 50),
+                    BackgroundColor3 = config.theme == "dark" and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(200, 200, 200)),
+                    Size = UDim2.new(0, 120, 1, 0),
+                    Position = UDim2.new(1, -120, 0, 0),
+                    Parent = keybindFrame
+                })
+                
+                Create("UICorner", {
+                    CornerRadius = UDim.new(0, 4),
+                    Parent = keybindButton
+                })
+                
+                local listening = false
+                local currentKey = default
+                
+                local function UpdateKeybind(key)
+                    currentKey = key
+                    keybindButton.Text = tostring(key):gsub("Enum.KeyCode.", "")
+                    callback(key)
+                end
+                
+                keybindButton.MouseButton1Click:Connect(function()
+                    listening = true
+                    keybindButton.Text = "..."
+                end)
+                
+                UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                    if listening and not gameProcessed then
+                        if input.UserInputType == Enum.UserInputType.Keyboard then
+                            UpdateKeybind(input.KeyCode)
+                            listening = false
+                        elseif allowMouse and input.UserInputType == Enum.UserInputType.MouseButton1 then
+                            UpdateKeybind(Enum.KeyCode.MouseButton1)
+                            listening = false
+                        elseif allowMouse and input.UserInputType == Enum.UserInputType.MouseButton2 then
+                            UpdateKeybind(Enum.KeyCode.MouseButton2)
+                            listening = false
+                        end
+                    end
+                end)
+                
+                function sectionObj:GetKeybind()
+                    return currentKey
+                end
+                
+                function sectionObj:SetKeybind(key)
+                    UpdateKeybind(key)
+                end
+                
+                return sectionObj
+            end
+            
             return sectionObj
         end
         
@@ -948,8 +1070,4 @@ function MoonLib:CreateWindow(options)
 end
 
 -- Функция для загрузки библиотеки
-local function LoadLibrary()
-    return MoonLib
-end
-
-return LoadLibrary()
+return MoonLib
